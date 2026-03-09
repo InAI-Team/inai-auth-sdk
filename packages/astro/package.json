@@ -47,10 +47,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/inai-dev/sdk.git",
+    "url": "https://github.com/InAI-Team/inai-auth-sdk.git",
     "directory": "packages/astro"
   },
   "homepage": "https://inai.dev/",
-  "bugs": "https://github.com/inai-dev/sdk/issues",
+  "bugs": "https://github.com/InAI-Team/inai-auth-sdk/issues",
   "keywords": ["inai", "auth", "astro", "middleware", "multi-tenant", "ssg"]
 }
