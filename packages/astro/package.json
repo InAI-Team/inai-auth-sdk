@@ -1,0 +1,56 @@
+{
+  "name": "@inai-dev/astro",
+  "version": "0.1.0",
+  "description": "Astro integration for InAI Auth SDK",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./middleware": {
+      "types": "./dist/middleware.d.ts",
+      "import": "./dist/middleware.js"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js"
+    }
+  },
+  "files": ["dist", "src/components"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@inai-dev/types": "^0.1.0",
+    "@inai-dev/shared": "^0.1.0",
+    "@inai-dev/backend": "^0.1.0"
+  },
+  "peerDependencies": {
+    "astro": ">=4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "astro": {
+      "optional": false
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "InAI <contact@inai.dev>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/inai-dev/sdk.git",
+    "directory": "packages/astro"
+  },
+  "homepage": "https://inai.dev/",
+  "bugs": "https://github.com/inai-dev/sdk/issues",
+  "keywords": ["inai", "auth", "astro", "middleware", "multi-tenant", "ssg"]
+}
