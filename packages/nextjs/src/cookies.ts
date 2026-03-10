@@ -1,4 +1,4 @@
-import type { UserResource, JWTClaims, TokenPair } from "@inai-dev/types";
+import type { UserResource, PlatformUserResource, JWTClaims, TokenPair } from "@inai-dev/types";
 import {
   COOKIE_AUTH_TOKEN,
   COOKIE_REFRESH_TOKEN,
@@ -20,7 +20,7 @@ interface CookieStore {
 }
 
 interface SessionData {
-  user: UserResource;
+  user: UserResource | PlatformUserResource;
   expiresAt: string;
   permissions?: string[];
   orgId?: string;
@@ -32,7 +32,7 @@ interface SessionData {
 export function setAuthCookies(
   cookieStore: CookieStore,
   tokens: TokenPair,
-  user: UserResource,
+  user: UserResource | PlatformUserResource,
 ): void {
   const isProduction = process.env.NODE_ENV === "production";
   const claims = decodeJWTPayload(tokens.access_token);

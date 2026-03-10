@@ -29,6 +29,7 @@ export type {
   ServerAuthObject,
   ProtectedAuthObject,
   UserResource,
+  PlatformUserResource,
   SessionResource,
   OrganizationResource,
   InAIAuthConfig,

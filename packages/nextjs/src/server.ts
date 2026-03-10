@@ -5,6 +5,7 @@ import type {
   ServerAuthObject,
   ProtectedAuthObject,
   UserResource,
+  PlatformUserResource,
 } from "@inai-dev/types";
 import { InAIAuthClient } from "@inai-dev/backend";
 import { isTokenExpired, getClaimsFromToken } from "@inai-dev/shared";
@@ -17,6 +18,7 @@ import { getAuthConfig } from "./config";
 export { createAuthRoutes } from "./api-routes";
 export { createPlatformAuthRoutes } from "./platform-api-routes";
 export { configureAuth, getAuthConfig } from "./config";
+export { setAuthCookies, clearAuthCookies, getRefreshTokenFromCookies, getAuthTokenFromCookies } from "./cookies";
 
 export async function auth(): Promise<ServerAuthObject> {
   const cookieStore = await cookies();
@@ -119,7 +121,7 @@ export async function auth(): Promise<ServerAuthObject> {
 
 export async function currentUser(
   opts?: { fresh?: boolean },
-): Promise<UserResource | null> {
+): Promise<UserResource | PlatformUserResource | null> {
   const cookieStore = await cookies();
 
   if (opts?.fresh) {
