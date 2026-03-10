@@ -14,7 +14,7 @@ import {
   getRefreshTokenFromCookies,
 } from "./cookies";
 
-export function createAuthRoutes(config: InAIAuthConfig) {
+export function createAuthRoutes(config: InAIAuthConfig = {}) {
   const client = new InAIAuthClient(config);
 
   async function handleLogin(req: NextRequest) {

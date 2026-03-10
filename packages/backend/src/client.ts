@@ -11,15 +11,15 @@ import type {
   ApiKeyResource,
   PaginatedResult,
 } from "@inai-dev/types";
-import { InAIAuthError, HEADER_PUBLISHABLE_KEY } from "@inai-dev/shared";
+import { InAIAuthError, HEADER_PUBLISHABLE_KEY, DEFAULT_API_URL } from "@inai-dev/shared";
 
 export class InAIAuthClient {
   private apiUrl: string;
   private publishableKey: string;
   private tenantId?: string;
 
-  constructor(config: InAIAuthConfig) {
-    this.apiUrl = config.apiUrl.replace(/\/$/, "");
+  constructor(config: InAIAuthConfig = {}) {
+    this.apiUrl = (config.apiUrl ?? DEFAULT_API_URL).replace(/\/$/, "");
     this.publishableKey = config.publishableKey ?? "";
     this.tenantId = config.tenantId;
   }

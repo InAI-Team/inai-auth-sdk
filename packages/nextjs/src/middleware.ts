@@ -5,11 +5,13 @@ import {
   COOKIE_AUTH_TOKEN,
   COOKIE_AUTH_SESSION,
   COOKIE_REFRESH_TOKEN,
+  DEFAULT_API_URL,
   getClaimsFromToken,
   isTokenExpired,
 } from "@inai-dev/shared";
 
 export interface InAIMiddlewareConfig {
+  apiUrl?: string;
   publicRoutes?: string[] | ((req: NextRequest) => boolean);
   signInUrl?: string;
   beforeAuth?: (req: NextRequest) => NextResponse | void;
@@ -81,6 +83,7 @@ function buildAuthObject(
 async function runAuthCheck(
   req: NextRequest,
   signInUrl: string,
+  apiUrl?: string,
 ): Promise<{ authObj: AuthObject | null; response?: NextResponse }> {
   const { pathname } = req.nextUrl;
   const token = req.cookies.get(COOKIE_AUTH_TOKEN)?.value;
@@ -89,21 +92,61 @@ async function runAuthCheck(
     const refreshToken = req.cookies.get(COOKIE_REFRESH_TOKEN)?.value;
     if (refreshToken) {
       try {
-        const refreshUrl = new URL("/api/auth/refresh", req.url);
-        const refreshRes = await fetch(refreshUrl.toString(), {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Cookie: req.headers.get("cookie") ?? "",
-          },
-        });
-        if (refreshRes.ok) {
-          const response = NextResponse.next();
-          const setCookies = refreshRes.headers.getSetCookie?.() ?? [];
-          for (const cookie of setCookies) {
-            response.headers.append("Set-Cookie", cookie);
+        if (apiUrl) {
+          const refreshRes = await fetch(`${apiUrl}/api/platform/auth/refresh`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh_token: refreshToken }),
+          });
+          if (refreshRes.ok) {
+            const newTokens = await refreshRes.json() as {
+              access_token: string;
+              refresh_token: string;
+              expires_in: number;
+            };
+            const meRes = await fetch(`${apiUrl}/api/platform/auth/me`, {
+              headers: { Authorization: `Bearer ${newTokens.access_token}` },
+            });
+            if (meRes.ok) {
+              const meData = await meRes.json();
+              const newUser = meData.data ?? meData;
+              const isProduction = process.env.NODE_ENV === "production";
+              const response = NextResponse.next();
+              response.cookies.set(COOKIE_AUTH_TOKEN, newTokens.access_token, {
+                httpOnly: true, secure: isProduction, sameSite: "lax",
+                path: "/", maxAge: newTokens.expires_in,
+              });
+              response.cookies.set(COOKIE_REFRESH_TOKEN, newTokens.refresh_token, {
+                httpOnly: true, secure: isProduction, sameSite: "strict",
+                path: "/api/auth", maxAge: 7 * 24 * 60 * 60,
+              });
+              response.cookies.set(COOKIE_AUTH_SESSION, JSON.stringify({
+                user: newUser,
+                expiresAt: new Date(Date.now() + newTokens.expires_in * 1000).toISOString(),
+              }), {
+                httpOnly: false, secure: isProduction, sameSite: "lax",
+                path: "/", maxAge: newTokens.expires_in,
+              });
+              return { authObj: null, response };
+            }
           }
-          return { authObj: null, response };
+        } else {
+          const refreshUrl = new URL("/api/auth/refresh", req.url);
+          const refreshRes = await fetch(refreshUrl.toString(), {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Cookie: req.headers.get("cookie") ?? "",
+            },
+          });
+          if (refreshRes.ok) {
+            const response = NextResponse.next();
+            const setCookies = refreshRes.headers.getSetCookie?.() ?? [];
+            for (const cookie of setCookies) {
+              response.headers.append("Set-Cookie", cookie);
+            }
+            return { authObj: null, response };
+          }
         }
       } catch {
         // Refresh failed, fall through to redirect
@@ -138,6 +181,7 @@ async function runAuthCheck(
 
 export function inaiAuthMiddleware(config: InAIMiddlewareConfig = {}) {
   const {
+    apiUrl = DEFAULT_API_URL,
     publicRoutes = [],
     signInUrl = "/login",
     beforeAuth,
@@ -158,7 +202,7 @@ export function inaiAuthMiddleware(config: InAIMiddlewareConfig = {}) {
       return NextResponse.next();
     }
 
-    const { authObj, response } = await runAuthCheck(req, signInUrl);
+    const { authObj, response } = await runAuthCheck(req, signInUrl, apiUrl);
     if (response) return response;
     if (!authObj)
       return NextResponse.redirect(new URL(signInUrl, req.url));
@@ -179,6 +223,7 @@ export function withInAIAuth(
   config: InAIMiddlewareConfig = {},
 ): (req: NextRequest) => Promise<NextResponse> {
   const {
+    apiUrl = DEFAULT_API_URL,
     publicRoutes = [],
     signInUrl = "/login",
     beforeAuth,
@@ -198,7 +243,7 @@ export function withInAIAuth(
     const isPublic = isPublicRoute(req, publicRoutes, builtinPublic);
 
     if (!isPublic) {
-      const { authObj, response } = await runAuthCheck(req, signInUrl);
+      const { authObj, response } = await runAuthCheck(req, signInUrl, apiUrl);
       if (response) return response;
       if (!authObj)
         return NextResponse.redirect(new URL(signInUrl, req.url));

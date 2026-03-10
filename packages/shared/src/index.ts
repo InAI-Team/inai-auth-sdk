@@ -15,6 +15,7 @@ export {
   HEADER_PUBLISHABLE_KEY,
   HEADER_AUTHORIZATION,
   HEADER_INAI_AUTH,
+  DEFAULT_API_URL,
 } from "./constants";
 export { normalizeApiUrl, buildEndpoint } from "./url";
 export { isValidEmail, isStrongPassword } from "./validators";

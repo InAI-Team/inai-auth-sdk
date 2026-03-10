@@ -1,5 +1,5 @@
 export interface InAIAuthConfig {
-  apiUrl: string;
+  apiUrl?: string;
   publishableKey?: string;
   tenantId?: string;
 }

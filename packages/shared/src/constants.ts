@@ -10,3 +10,5 @@ export const DEFAULT_AFTER_SIGN_OUT_URL = "/login";
 export const HEADER_PUBLISHABLE_KEY = "X-Publishable-Key";
 export const HEADER_AUTHORIZATION = "Authorization";
 export const HEADER_INAI_AUTH = "x-inai-auth";
+
+export const DEFAULT_API_URL = "https://apiauth.inai.dev";

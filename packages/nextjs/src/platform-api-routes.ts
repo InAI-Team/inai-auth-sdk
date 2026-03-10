@@ -9,7 +9,7 @@ import {
   COOKIE_REFRESH_TOKEN,
 } from "@inai-dev/shared";
 
-export function createPlatformAuthRoutes(config: InAIAuthConfig) {
+export function createPlatformAuthRoutes(config: InAIAuthConfig = {}) {
   const client = new InAIAuthClient(config);
   const isProduction = process.env.NODE_ENV === "production";
 
