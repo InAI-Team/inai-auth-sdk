@@ -1,6 +1,6 @@
 {
   "name": "@inai-dev/nextjs",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Next.js integration for InAI Auth SDK",
   "type": "module",
   "main": "./dist/index.js",
@@ -22,7 +22,9 @@
       "require": "./dist/middleware.cjs"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
@@ -32,10 +34,10 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@inai-dev/types": "^0.1.0",
-    "@inai-dev/shared": "^0.1.0",
-    "@inai-dev/backend": "^0.1.0",
-    "@inai-dev/react": "^0.1.0"
+    "@inai-dev/types": "^1.0.0",
+    "@inai-dev/shared": "^1.0.0",
+    "@inai-dev/backend": "^1.0.0",
+    "@inai-dev/react": "^0.1.1"
   },
   "peerDependencies": {
     "next": ">=14.0.0",
@@ -59,5 +61,13 @@
   },
   "homepage": "https://inai.dev/",
   "bugs": "https://github.com/InAI-Team/inai-auth-sdk/issues",
-  "keywords": ["inai", "auth", "nextjs", "next", "middleware", "multi-tenant", "react"]
+  "keywords": [
+    "inai",
+    "auth",
+    "nextjs",
+    "next",
+    "middleware",
+    "multi-tenant",
+    "react"
+  ]
 }

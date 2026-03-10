@@ -1,6 +1,6 @@
 {
   "name": "@inai-dev/backend",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Server-side InAI Auth client",
   "type": "module",
   "main": "./dist/index.js",
@@ -12,7 +12,9 @@
       "require": "./dist/index.cjs"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
@@ -22,8 +24,8 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@inai-dev/types": "^0.1.0",
-    "@inai-dev/shared": "^0.1.0"
+    "@inai-dev/types": "^1.0.0",
+    "@inai-dev/shared": "^1.0.0"
   },
   "sideEffects": false,
   "publishConfig": {
@@ -38,5 +40,12 @@
   },
   "homepage": "https://inai.dev/",
   "bugs": "https://github.com/InAI-Team/inai-auth-sdk/issues",
-  "keywords": ["inai", "auth", "backend", "server", "multi-tenant", "api-client"]
+  "keywords": [
+    "inai",
+    "auth",
+    "backend",
+    "server",
+    "multi-tenant",
+    "api-client"
+  ]
 }

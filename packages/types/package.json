@@ -1,6 +1,6 @@
 {
   "name": "@inai-dev/types",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "TypeScript types for the InAI Auth SDK",
   "type": "module",
   "main": "./dist/index.js",
@@ -12,7 +12,9 @@
       "require": "./dist/index.cjs"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
@@ -33,5 +35,11 @@
   },
   "homepage": "https://inai.dev/",
   "bugs": "https://github.com/InAI-Team/inai-auth-sdk/issues",
-  "keywords": ["inai", "auth", "types", "typescript", "multi-tenant"]
+  "keywords": [
+    "inai",
+    "auth",
+    "types",
+    "typescript",
+    "multi-tenant"
+  ]
 }

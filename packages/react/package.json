@@ -1,6 +1,6 @@
 {
   "name": "@inai-dev/react",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "React components, hooks, and providers for InAI Auth",
   "type": "module",
   "main": "./dist/index.js",
@@ -12,7 +12,9 @@
       "require": "./dist/index.cjs"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
@@ -22,8 +24,8 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@inai-dev/types": "^0.1.0",
-    "@inai-dev/shared": "^0.1.0"
+    "@inai-dev/types": "^1.0.0",
+    "@inai-dev/shared": "^1.0.0"
   },
   "peerDependencies": {
     "react": ">=18.0.0"
@@ -50,5 +52,12 @@
   },
   "homepage": "https://inai.dev/",
   "bugs": "https://github.com/InAI-Team/inai-auth-sdk/issues",
-  "keywords": ["inai", "auth", "react", "hooks", "provider", "multi-tenant"]
+  "keywords": [
+    "inai",
+    "auth",
+    "react",
+    "hooks",
+    "provider",
+    "multi-tenant"
+  ]
 }

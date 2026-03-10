@@ -1,6 +1,6 @@
 {
   "name": "@inai-dev/astro",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Astro integration for InAI Auth SDK",
   "type": "module",
   "main": "./dist/index.js",
@@ -19,7 +19,10 @@
       "import": "./dist/server.js"
     }
   },
-  "files": ["dist", "src/components"],
+  "files": [
+    "dist",
+    "src/components"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
@@ -28,9 +31,9 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@inai-dev/types": "^0.1.0",
-    "@inai-dev/shared": "^0.1.0",
-    "@inai-dev/backend": "^0.1.0"
+    "@inai-dev/types": "^1.0.0",
+    "@inai-dev/shared": "^1.0.0",
+    "@inai-dev/backend": "^1.0.0"
   },
   "peerDependencies": {
     "astro": ">=4.0.0"
@@ -52,5 +55,12 @@
   },
   "homepage": "https://inai.dev/",
   "bugs": "https://github.com/InAI-Team/inai-auth-sdk/issues",
-  "keywords": ["inai", "auth", "astro", "middleware", "multi-tenant", "ssg"]
+  "keywords": [
+    "inai",
+    "auth",
+    "astro",
+    "middleware",
+    "multi-tenant",
+    "ssg"
+  ]
 }
