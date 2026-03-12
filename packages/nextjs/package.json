@@ -1,6 +1,6 @@
 {
   "name": "@inai-dev/nextjs",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Next.js integration for InAI Auth SDK",
   "type": "module",
   "main": "./dist/index.js",
@@ -36,7 +36,7 @@
   "dependencies": {
     "@inai-dev/types": "^1.0.0",
     "@inai-dev/shared": "^1.0.0",
-    "@inai-dev/backend": "^1.0.0",
+    "@inai-dev/backend": "^1.1.0",
     "@inai-dev/react": "^0.1.1"
   },
   "peerDependencies": {

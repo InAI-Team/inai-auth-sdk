@@ -1,5 +1,11 @@
 # @inai-dev/backend
 
+## 1.1.0
+
+### Minor Changes
+
+- Documentation and apiUrl
+
 ## 1.0.0
 
 ### Major Changes

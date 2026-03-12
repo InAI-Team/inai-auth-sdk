@@ -1,5 +1,16 @@
 # @inai-dev/nextjs
 
+## 1.1.0
+
+### Minor Changes
+
+- Documentation and apiUrl
+
+### Patch Changes
+
+- Updated dependencies
+  - @inai-dev/backend@1.1.0
+
 ## 1.0.0
 
 ### Major Changes
