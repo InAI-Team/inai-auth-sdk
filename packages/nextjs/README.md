@@ -1,6 +1,6 @@
 # @inai-dev/nextjs
 
-Full Next.js integration for InAI Auth. Includes middleware, server-side helpers, API route handlers, and re-exports all React hooks/components.
+Full Next.js integration for InAI Auth. Includes middleware, server-side auth helpers, API route handlers, React hooks, and UI components.
 
 ## Installation
 
@@ -8,72 +8,410 @@ Full Next.js integration for InAI Auth. Includes middleware, server-side helpers
 npm install @inai-dev/nextjs
 ```
 
-## Setup
-
-### 1. Environment Variables
+## Environment Variables
 
 ```env
+# Required — your publishable key (client-side accessible)
 NEXT_PUBLIC_INAI_PUBLISHABLE_KEY=pk_live_...
-INAI_SECRET_KEY=sk_live_...
+
+# Optional — API URL overrides (defaults to https://apiauth.inai.dev)
+INAI_API_URL=https://apiauth.inai.dev
+NEXT_PUBLIC_INAI_API_URL=https://apiauth.inai.dev
 ```
 
-### 2. Middleware
+The API URL is resolved in this order:
+1. Explicit config via `configureAuth({ apiUrl: "..." })`
+2. `INAI_API_URL` or `NEXT_PUBLIC_INAI_API_URL` environment variable
+3. Default: `https://apiauth.inai.dev`
+
+## Setup
+
+### 1. Middleware
 
 ```ts
 // middleware.ts
-import { authMiddleware } from "@inai-dev/nextjs/middleware";
+import { inaiAuthMiddleware } from "@inai-dev/nextjs/middleware";
 
-export default authMiddleware({
-  publishableKey: process.env.NEXT_PUBLIC_INAI_PUBLISHABLE_KEY!,
-  publicRoutes: ["/", "/about", "/sign-in"],
+export default inaiAuthMiddleware({
+  publicRoutes: ["/", "/about", "/login"],
+  signInUrl: "/login",
 });
 
 export const config = { matcher: ["/((?!_next|static|favicon.ico).*)"] };
 ```
 
-### 3. Provider
+### 2. Provider
 
 ```tsx
 // app/layout.tsx
-import { InAIProvider } from "@inai-dev/nextjs";
+import { InAIAuthProvider } from "@inai-dev/nextjs";
 
-export default function RootLayout({ children }) {
-  return <InAIProvider>{children}</InAIProvider>;
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html>
+      <body>
+        <InAIAuthProvider>{children}</InAIAuthProvider>
+      </body>
+    </html>
+  );
 }
 ```
 
-### 4. Server-Side Auth
-
-```ts
-// app/dashboard/page.tsx
-import { auth } from "@inai-dev/nextjs/server";
-
-export default async function Dashboard() {
-  const session = await auth();
-  if (!session) redirect("/sign-in");
-  return <p>Welcome {session.user.email}</p>;
-}
-```
-
-### 5. API Route Handlers
+### 3. API Routes
 
 ```ts
 // app/api/auth/[...inai]/route.ts
-import { handleAuthRoutes } from "@inai-dev/nextjs";
-export const { GET, POST } = handleAuthRoutes();
+import { createAuthRoutes } from "@inai-dev/nextjs/server";
+
+export const { GET, POST } = createAuthRoutes();
 ```
 
-## Exports
+Handles the following endpoints automatically:
+- `POST /api/auth/login` — User login
+- `POST /api/auth/register` — User registration
+- `POST /api/auth/mfa-challenge` — MFA verification
+- `POST /api/auth/refresh` — Token refresh
+- `POST /api/auth/logout` — User logout
 
-- `@inai-dev/nextjs` — Provider, React hooks, API route handler
-- `@inai-dev/nextjs/server` — `auth()`, `currentUser()`, server-side helpers
-- `@inai-dev/nextjs/middleware` — `authMiddleware()`
+#### Platform API Routes
 
-## Documentation
+For multi-tenant platform authentication:
 
-- [Getting Started](https://github.com/inai-dev/sdk/blob/main/docs/getting-started.md)
-- [Next.js Integration](https://github.com/inai-dev/sdk/blob/main/docs/nextjs-integration.md)
-- [API Reference](https://github.com/inai-dev/sdk/blob/main/docs/api-reference.md)
+```ts
+// app/api/auth/[...inai]/route.ts
+import { createPlatformAuthRoutes } from "@inai-dev/nextjs/server";
+
+export const { GET, POST } = createPlatformAuthRoutes();
+```
+
+## Server-Side Auth
+
+### `auth()`
+
+Returns a `ServerAuthObject` with the current authentication state.
+
+```ts
+import { auth } from "@inai-dev/nextjs/server";
+
+export default async function Dashboard() {
+  const { userId, has, protect, redirectToSignIn, getToken } = await auth();
+
+  // Check if user is authenticated
+  if (!userId) {
+    redirectToSignIn({ returnTo: "/dashboard" });
+  }
+
+  // Check roles/permissions
+  if (has({ role: "admin" })) {
+    // admin-only logic
+  }
+
+  // Protect — throws redirect if unauthorized
+  const authed = protect({ permission: "posts:write" });
+
+  // Get the access token
+  const token = await getToken();
+
+  return <p>User: {userId}</p>;
+}
+```
+
+**`ServerAuthObject`:**
+
+| Property | Type | Description |
+|---|---|---|
+| `userId` | `string \| null` | Current user ID |
+| `tenantId` | `string \| null` | Tenant ID |
+| `appId` | `string \| null` | Application ID |
+| `envId` | `string \| null` | Environment ID |
+| `orgId` | `string \| null` | Active organization ID |
+| `orgRole` | `string \| null` | Role in active organization |
+| `sessionId` | `string \| null` | Session ID |
+| `getToken()` | `() => Promise<string \| null>` | Get the access token |
+| `has(params)` | `({ role?, permission? }) => boolean` | Check role or permission |
+| `protect(params?)` | `({ role?, permission?, redirectTo? }) => ProtectedAuthObject` | Assert auth or redirect |
+| `redirectToSignIn(opts?)` | `({ returnTo? }) => never` | Redirect to sign-in page |
+
+### `currentUser()`
+
+Returns the full user object, or `null` if not authenticated.
+
+```ts
+import { currentUser } from "@inai-dev/nextjs/server";
+
+export default async function Profile() {
+  const user = await currentUser();
+  if (!user) return null;
+
+  return <p>{user.email}</p>;
+}
+
+// Force a fresh fetch from the API (bypasses cached session)
+const freshUser = await currentUser({ fresh: true });
+```
+
+## React Hooks
+
+All hooks are imported from `@inai-dev/nextjs`.
+
+### `useAuth()`
+
+```ts
+const { isLoaded, isSignedIn, userId, has, signOut } = useAuth();
+
+has({ role: "admin" });       // check role
+has({ permission: "read" });  // check permission
+await signOut();
+```
+
+### `useUser()`
+
+```ts
+const { isLoaded, isSignedIn, user } = useUser();
+// user: UserResource | null
+```
+
+### `useSession()`
+
+```ts
+const { isLoaded, isSignedIn, userId, tenantId, orgId, orgRole } = useSession();
+```
+
+### `useOrganization()`
+
+```ts
+const { isLoaded, orgId, orgRole } = useOrganization();
+```
+
+### `useSignIn()`
+
+```ts
+const { signIn, isLoading, error, status, reset } = useSignIn();
+
+await signIn.create({ identifier: "user@example.com", password: "..." });
+// status: "idle" | "loading" | "needs_mfa" | "complete" | "error"
+
+// MFA flow
+await signIn.attemptMFA({ code: "123456" });
+```
+
+### `useSignUp()`
+
+```ts
+const { signUp, isLoading, error, status, reset } = useSignUp();
+
+await signUp.create({
+  email: "user@example.com",
+  password: "...",
+  firstName: "Jane",
+  lastName: "Doe",
+});
+// status: "idle" | "loading" | "needs_email_verification" | "complete" | "error"
+```
+
+## React Components
+
+All components are imported from `@inai-dev/nextjs`.
+
+### `<Protect>`
+
+Renders children only if the user has the required role or permission.
+
+```tsx
+<Protect role="admin" fallback={<p>Access denied</p>}>
+  <AdminPanel />
+</Protect>
+
+<Protect permission="posts:write">
+  <Editor />
+</Protect>
+```
+
+### `<SignedIn>` / `<SignedOut>`
+
+Conditional rendering based on authentication state.
+
+```tsx
+<SignedIn>
+  <p>Welcome back!</p>
+</SignedIn>
+<SignedOut>
+  <p>Please sign in.</p>
+</SignedOut>
+```
+
+### `<PermissionGate>`
+
+Permission-based access control.
+
+```tsx
+<PermissionGate permission="billing:manage" fallback={<p>No access</p>}>
+  <BillingSettings />
+</PermissionGate>
+```
+
+### `<UserButton>`
+
+User profile menu with avatar and dropdown.
+
+```tsx
+<UserButton
+  afterSignOutUrl="/"
+  showName
+  menuItems={[{ label: "Settings", onClick: () => router.push("/settings") }]}
+  appearance={{ buttonSize: 36, buttonBg: "#1a1a2e" }}
+/>
+```
+
+### `<SignIn>`
+
+Sign-in form with MFA support.
+
+```tsx
+<SignIn
+  redirectUrl="/dashboard"
+  onSuccess={() => console.log("Signed in!")}
+  onMFARequired={(mfaToken) => router.push("/mfa")}
+/>
+```
+
+### `<OrganizationSwitcher>`
+
+Organization switching dropdown.
+
+```tsx
+<OrganizationSwitcher />
+```
+
+## Advanced Configuration
+
+### `configureAuth()` / `getAuthConfig()`
+
+Set global configuration early in your app (e.g., in `layout.tsx` or a server initialization file).
+
+```ts
+import { configureAuth, getAuthConfig } from "@inai-dev/nextjs/server";
+
+configureAuth({
+  signInUrl: "/login",
+  signUpUrl: "/register",
+  afterSignInUrl: "/dashboard",
+  afterSignOutUrl: "/",
+  apiUrl: "https://apiauth.inai.dev",
+  publishableKey: "pk_live_...",
+});
+
+const config = getAuthConfig();
+// { signInUrl, signUpUrl, afterSignInUrl, afterSignOutUrl, apiUrl, publishableKey }
+```
+
+### `createRouteMatcher()`
+
+Create a reusable route matcher for middleware logic.
+
+```ts
+import { createRouteMatcher } from "@inai-dev/nextjs/middleware";
+
+const isPublic = createRouteMatcher(["/", "/about", "/api/(.*)"]);
+const isAdmin = createRouteMatcher(["/admin(.*)"]);
+```
+
+### `withInAIAuth()`
+
+Compose InAI auth with your existing middleware.
+
+```ts
+import { withInAIAuth } from "@inai-dev/nextjs/middleware";
+
+export default withInAIAuth(
+  (req) => {
+    // Your custom middleware logic
+    return NextResponse.next();
+  },
+  {
+    publicRoutes: ["/", "/login"],
+    signInUrl: "/login",
+    beforeAuth: (req) => {
+      // Runs before auth check
+    },
+    afterAuth: (auth, req) => {
+      // Runs after auth check
+      if (auth.userId && req.nextUrl.pathname === "/login") {
+        return NextResponse.redirect(new URL("/dashboard", req.url));
+      }
+    },
+  }
+);
+```
+
+## Exports Reference
+
+### `@inai-dev/nextjs`
+
+| Export | Kind | Description |
+|---|---|---|
+| `InAIAuthProvider` | Component | Auth context provider |
+| `Protect` | Component | Role/permission gate |
+| `SignedIn` | Component | Renders when signed in |
+| `SignedOut` | Component | Renders when signed out |
+| `PermissionGate` | Component | Permission-based gate |
+| `UserButton` | Component | User profile menu |
+| `SignIn` | Component | Sign-in form |
+| `OrganizationSwitcher` | Component | Org switcher |
+| `useAuth` | Hook | Auth state & actions |
+| `useUser` | Hook | User data |
+| `useSession` | Hook | Session info |
+| `useOrganization` | Hook | Organization data |
+| `useSignIn` | Hook | Sign-in flow |
+| `useSignUp` | Hook | Sign-up flow |
+| `COOKIE_AUTH_TOKEN` | Constant | `"auth_token"` |
+| `COOKIE_REFRESH_TOKEN` | Constant | `"refresh_token"` |
+| `COOKIE_AUTH_SESSION` | Constant | `"auth_session"` |
+
+### `@inai-dev/nextjs/server`
+
+| Export | Kind | Description |
+|---|---|---|
+| `auth` | Function | Get `ServerAuthObject` |
+| `currentUser` | Function | Get current user |
+| `createAuthRoutes` | Function | App user auth routes |
+| `createPlatformAuthRoutes` | Function | Platform auth routes |
+| `configureAuth` | Function | Set global config |
+| `getAuthConfig` | Function | Get resolved config |
+| `setAuthCookies` | Function | Set auth cookies |
+| `clearAuthCookies` | Function | Clear auth cookies |
+| `getAuthTokenFromCookies` | Function | Get access token |
+| `getRefreshTokenFromCookies` | Function | Get refresh token |
+
+### `@inai-dev/nextjs/middleware`
+
+| Export | Kind | Description |
+|---|---|---|
+| `inaiAuthMiddleware` | Function | Auth middleware |
+| `withInAIAuth` | Function | Compose middleware |
+| `createRouteMatcher` | Function | Route pattern matcher |
+
+## Exported Types
+
+```ts
+import type {
+  AuthObject,
+  ServerAuthObject,
+  ProtectedAuthObject,
+  UserResource,
+  PlatformUserResource,
+  SessionResource,
+  OrganizationResource,
+  InAIAuthConfig,
+  InAIAuthErrorBody,
+  SignInResult,
+  SignUpResult,
+} from "@inai-dev/nextjs";
+
+import type {
+  InAIMiddlewareConfig,
+} from "@inai-dev/nextjs/middleware";
+```
 
 ## License
 

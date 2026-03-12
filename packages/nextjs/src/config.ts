@@ -1,4 +1,5 @@
 import type { InAIAuthSDKConfig } from "@inai-dev/types";
+import { DEFAULT_API_URL } from "@inai-dev/shared";
 
 type ResolvedConfig = Required<InAIAuthSDKConfig>;
 
@@ -7,7 +8,7 @@ const defaults: ResolvedConfig = {
   signUpUrl: "/register",
   afterSignInUrl: "/",
   afterSignOutUrl: "/login",
-  apiUrl: "",
+  apiUrl: DEFAULT_API_URL,
   publishableKey: "",
 };
 

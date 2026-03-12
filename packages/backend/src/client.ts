@@ -19,7 +19,7 @@ export class InAIAuthClient {
   private tenantId?: string;
 
   constructor(config: InAIAuthConfig = {}) {
-    this.apiUrl = (config.apiUrl ?? DEFAULT_API_URL).replace(/\/$/, "");
+    this.apiUrl = (config.apiUrl || DEFAULT_API_URL).replace(/\/$/, "");
     this.publishableKey = config.publishableKey ?? "";
     this.tenantId = config.tenantId;
   }
