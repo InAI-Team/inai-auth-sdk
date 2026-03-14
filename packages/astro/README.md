@@ -206,6 +206,10 @@ import type { AstroCookies, AstroAPIContext } from "@inai-dev/astro/api-routes";
 import type { AuthObject, UserResource, OrganizationResource } from "@inai-dev/astro";
 ```
 
+## Questions & Support
+
+Visit [https://inai.dev](https://inai.dev) for documentation, guides, and support.
+
 ## License
 
 [MIT](../../LICENSE)

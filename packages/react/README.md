@@ -171,6 +171,10 @@ Organization switching dropdown.
 | `useSignIn` | Hook | Sign-in flow |
 | `useSignUp` | Hook | Sign-up flow |
 
+## Questions & Support
+
+Visit [https://inai.dev](https://inai.dev) for documentation, guides, and support.
+
 ## License
 
 [MIT](../../LICENSE)

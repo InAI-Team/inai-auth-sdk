@@ -87,6 +87,10 @@ import { normalizeApiUrl, buildEndpoint } from "@inai-dev/shared";
 | `DEFAULT_API_URL` | Constant | Default API URL (internal) |
 | `HEADER_PUBLISHABLE_KEY` | Constant | Publishable key header name |
 
+## Questions & Support
+
+Visit [https://inai.dev](https://inai.dev) for documentation, guides, and support.
+
 ## License
 
 [MIT](../../LICENSE)

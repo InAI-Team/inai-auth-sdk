@@ -89,6 +89,10 @@ import type {
 | `SignUpResult` | Result | Sign-up flow result |
 | `InAIAuthErrorBody` | Result | Error response body |
 
+## Questions & Support
+
+Visit [https://inai.dev](https://inai.dev) for documentation, guides, and support.
+
 ## License
 
 [MIT](../../LICENSE)
