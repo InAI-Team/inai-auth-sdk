@@ -1,5 +1,16 @@
 # @inai-dev/shared
 
+## 1.2.0
+
+### Minor Changes
+
+- README.md
+
+### Patch Changes
+
+- Updated dependencies
+  - @inai-dev/types@1.2.0
+
 ## 1.1.0
 
 ### Minor Changes

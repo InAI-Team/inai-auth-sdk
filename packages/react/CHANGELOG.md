@@ -1,5 +1,17 @@
 # @inai-dev/react
 
+## 0.3.0
+
+### Minor Changes
+
+- README.md
+
+### Patch Changes
+
+- Updated dependencies
+  - @inai-dev/shared@1.2.0
+  - @inai-dev/types@1.2.0
+
 ## 0.2.0
 
 ### Minor Changes

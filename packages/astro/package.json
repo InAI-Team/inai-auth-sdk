@@ -1,6 +1,6 @@
 {
   "name": "@inai-dev/astro",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Astro integration for InAI Auth SDK",
   "type": "module",
   "main": "./dist/index.js",
@@ -35,9 +35,9 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@inai-dev/types": "^1.1.0",
-    "@inai-dev/shared": "^1.1.0",
-    "@inai-dev/backend": "^1.2.0"
+    "@inai-dev/types": "^1.2.0",
+    "@inai-dev/shared": "^1.2.0",
+    "@inai-dev/backend": "^1.3.0"
   },
   "peerDependencies": {
     "astro": ">=4.0.0"
