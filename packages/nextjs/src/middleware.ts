@@ -6,9 +6,11 @@ import {
   COOKIE_AUTH_SESSION,
   COOKIE_REFRESH_TOKEN,
   DEFAULT_API_URL,
-  getClaimsFromToken,
-  isTokenExpired,
+  decodeJWTHeader,
+  verifyES256,
+  JWKSClient,
 } from "@inai-dev/shared";
+import { isTokenExpired } from "@inai-dev/shared";
 
 export interface InAIMiddlewareConfig {
   authMode?: "app" | "platform";
@@ -16,6 +18,23 @@ export interface InAIMiddlewareConfig {
   signInUrl?: string;
   beforeAuth?: (req: NextRequest) => NextResponse | void;
   afterAuth?: (auth: AuthObject, req: NextRequest) => NextResponse | void;
+  jwksUrl?: string;
+  apiUrl?: string;
+}
+
+// Module-level JWKS client (shared across requests in the same worker/process)
+let sharedJwksClient: JWKSClient | null = null;
+let sharedJwksUrl: string | null = null;
+
+function getJwksClient(config: InAIMiddlewareConfig): JWKSClient {
+  const jwksUrl = config.jwksUrl
+    ?? `${config.apiUrl ?? DEFAULT_API_URL}/.well-known/jwks.json`;
+
+  if (!sharedJwksClient || sharedJwksUrl !== jwksUrl) {
+    sharedJwksClient = new JWKSClient(jwksUrl);
+    sharedJwksUrl = jwksUrl;
+  }
+  return sharedJwksClient;
 }
 
 export function createRouteMatcher(
@@ -56,10 +75,33 @@ function isPublicRoute(
   return matchesRoute(pathname, publicRoutes);
 }
 
-function buildAuthObject(
+async function buildAuthObject(
   token: string,
-  claims: NonNullable<ReturnType<typeof getClaimsFromToken>>,
-): AuthObject {
+  jwksClient: JWKSClient,
+): Promise<AuthObject | null> {
+  const header = decodeJWTHeader(token);
+  if (!header?.kid) return null;
+
+  let publicKey: CryptoKey;
+  try {
+    publicKey = await jwksClient.getKey(header.kid);
+  } catch {
+    return null;
+  }
+
+  let claims = await verifyES256(token, publicKey);
+  if (!claims) {
+    // Signature failed with cached key — refetch once in case of key rotation
+    jwksClient.invalidate();
+    try {
+      publicKey = await jwksClient.getKey(header.kid);
+    } catch {
+      return null;
+    }
+    claims = await verifyES256(token, publicKey);
+    if (!claims) return null;
+  }
+
   const roles = claims.roles ?? [];
   const permissions = claims.permissions ?? [];
   return {
@@ -83,6 +125,7 @@ function buildAuthObject(
 async function runAuthCheck(
   req: NextRequest,
   signInUrl: string,
+  jwksClient: JWKSClient,
   apiUrl?: string,
 ): Promise<{ authObj: AuthObject | null; response?: NextResponse }> {
   const { pathname } = req.nextUrl;
@@ -168,15 +211,15 @@ async function runAuthCheck(
     return { authObj: null, response };
   }
 
-  const claims = getClaimsFromToken(token);
-  if (!claims) {
+  const authObj = await buildAuthObject(token, jwksClient);
+  if (!authObj) {
     return {
       authObj: null,
       response: NextResponse.redirect(new URL(signInUrl, req.url)),
     };
   }
 
-  return { authObj: buildAuthObject(token, claims) };
+  return { authObj };
 }
 
 export function inaiAuthMiddleware(config: InAIMiddlewareConfig = {}) {
@@ -189,6 +232,7 @@ export function inaiAuthMiddleware(config: InAIMiddlewareConfig = {}) {
   } = config;
 
   const builtinPublic = ["/_next/*", "/favicon.ico", "/api/*", signInUrl];
+  const jwksClient = getJwksClient(config);
 
   return async function middleware(
     req: NextRequest,
@@ -202,8 +246,8 @@ export function inaiAuthMiddleware(config: InAIMiddlewareConfig = {}) {
       return NextResponse.next();
     }
 
-    const apiUrl = authMode === "platform" ? DEFAULT_API_URL : undefined;
-    const { authObj, response } = await runAuthCheck(req, signInUrl, apiUrl);
+    const apiUrl = authMode === "platform" ? (config.apiUrl ?? DEFAULT_API_URL) : undefined;
+    const { authObj, response } = await runAuthCheck(req, signInUrl, jwksClient, apiUrl);
     if (response) return response;
     if (!authObj)
       return NextResponse.redirect(new URL(signInUrl, req.url));
@@ -232,6 +276,7 @@ export function withInAIAuth(
   } = config;
 
   const builtinPublic = ["/_next/*", "/favicon.ico", "/api/*", signInUrl];
+  const jwksClient = getJwksClient(config);
 
   return async function middleware(
     req: NextRequest,
@@ -244,8 +289,8 @@ export function withInAIAuth(
     const isPublic = isPublicRoute(req, publicRoutes, builtinPublic);
 
     if (!isPublic) {
-      const apiUrl = authMode === "platform" ? DEFAULT_API_URL : undefined;
-      const { authObj, response } = await runAuthCheck(req, signInUrl, apiUrl);
+      const apiUrl = authMode === "platform" ? (config.apiUrl ?? DEFAULT_API_URL) : undefined;
+      const { authObj, response } = await runAuthCheck(req, signInUrl, jwksClient, apiUrl);
       if (response) return response;
       if (!authObj)
         return NextResponse.redirect(new URL(signInUrl, req.url));

@@ -3,19 +3,28 @@ import type { AuthObject } from "@inai-dev/types";
 import {
   COOKIE_AUTH_TOKEN,
   COOKIE_REFRESH_TOKEN,
-  getClaimsFromToken,
+  decodeJWTHeader,
+  verifyES256,
   isTokenExpired,
+  JWKSClient,
+  DEFAULT_API_URL,
 } from "@inai-dev/shared";
 
 export interface InAIAstroMiddlewareConfig {
   publicRoutes?: string[];
   signInUrl?: string;
+  jwksUrl?: string;
+  apiUrl?: string;
 }
 
 export function inaiAstroMiddleware(
   config: InAIAstroMiddlewareConfig = {},
 ): MiddlewareHandler {
   const { publicRoutes = [], signInUrl = "/login" } = config;
+
+  const jwksUrl = config.jwksUrl
+    ?? `${config.apiUrl ?? DEFAULT_API_URL}/.well-known/jwks.json`;
+  const jwksClient = new JWKSClient(jwksUrl);
 
   return async (context, next) => {
     const { pathname } = context.url;
@@ -67,9 +76,32 @@ export function inaiAstroMiddleware(
       );
     }
 
-    const claims = getClaimsFromToken(token);
-    if (!claims) {
+    // Verify token signature with JWKS
+    const header = decodeJWTHeader(token);
+    if (!header?.kid) {
       return context.redirect(signInUrl);
+    }
+
+    let publicKey: CryptoKey;
+    try {
+      publicKey = await jwksClient.getKey(header.kid);
+    } catch {
+      return context.redirect(signInUrl);
+    }
+
+    let claims = await verifyES256(token, publicKey);
+    if (!claims) {
+      // Signature failed with cached key — refetch once in case of key rotation
+      jwksClient.invalidate();
+      try {
+        publicKey = await jwksClient.getKey(header.kid);
+      } catch {
+        return context.redirect(signInUrl);
+      }
+      claims = await verifyES256(token, publicKey);
+      if (!claims) {
+        return context.redirect(signInUrl);
+      }
     }
 
     const roles = claims.roles ?? [];

@@ -68,10 +68,15 @@ inaiAuthMiddleware({
     console.log(`User ${auth.userId} accessed ${req.path}`);
   },
 
+  // JWKS endpoint for ES256 token verification (optional)
+  jwksUrl: "https://apiauth.inai.dev/.well-known/jwks.json",
+
   // InAIAuthClient config (optional if using env vars)
   publishableKey: process.env.INAI_PUBLISHABLE_KEY,
 });
 ```
+
+> All tokens are cryptographically verified using ES256 (ECDSA P-256). Public keys are fetched from the JWKS endpoint and cached for 5 minutes.
 
 ### 2. Route Protection (RBAC)
 

@@ -129,6 +129,21 @@ const { publishableKey } = await client.rotateAppKeys(accessToken, appId, enviro
 | `revokeAppApiKey(accessToken, appId, keyId)` | Revoke API key |
 | `rotateAppKeys(accessToken, appId, envId)` | Rotate publishable keys |
 
+## Token Verification (ES256)
+
+Token verification is now async and uses ES256 cryptographic verification via JWKS:
+
+```ts
+import { buildAuthObjectFromToken } from "@inai-dev/backend";
+import { JWKSClient } from "@inai-dev/shared";
+
+const jwks = new JWKSClient("https://apiauth.inai.dev/.well-known/jwks.json");
+const auth = await buildAuthObjectFromToken(token, jwks);
+// auth: AuthObject | null
+```
+
+> All tokens are cryptographically verified using ES256 (ECDSA P-256). Public keys are fetched from the JWKS endpoint and cached for 5 minutes. On signature failure, the client automatically retries with fresh keys to handle key rotation.
+
 ## Error Handling
 
 ```ts

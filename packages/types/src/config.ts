@@ -2,6 +2,7 @@ export interface InAIAuthConfig {
   apiUrl?: string;
   publishableKey?: string;
   tenantId?: string;
+  jwksUrl?: string;
 }
 
 export interface InAIMiddlewareConfig {

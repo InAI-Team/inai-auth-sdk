@@ -36,6 +36,19 @@ const expired = isTokenExpired(token);      // boolean
 const claims = getClaimsFromToken(token);   // JWTClaims or null
 ```
 
+### JWT Verification (ES256)
+
+```ts
+import { JWKSClient, decodeJWTHeader, verifyES256 } from "@inai-dev/shared";
+
+const jwks = new JWKSClient("https://apiauth.inai.dev/.well-known/jwks.json");
+const header = decodeJWTHeader(token);
+const publicKey = await jwks.getKey(header.kid);
+const claims = await verifyES256(token, publicKey);
+```
+
+The `JWKSClient` fetches and caches public keys from the JWKS endpoint (default TTL: 5 minutes) with built-in rate limiting to prevent refetch abuse.
+
 ### Validators
 
 ```ts
@@ -86,6 +99,11 @@ import { normalizeApiUrl, buildEndpoint } from "@inai-dev/shared";
 | `COOKIE_AUTH_SESSION` | Constant | Session cookie name |
 | `DEFAULT_API_URL` | Constant | Default API URL (internal) |
 | `HEADER_PUBLISHABLE_KEY` | Constant | Publishable key header name |
+| `DEFAULT_JWKS_URL` | Constant | Default JWKS endpoint URL |
+| `JWKSClient` | Class | Client for fetching and caching JWKS public keys |
+| `decodeJWTHeader` | Function | Decode JWT header to extract `alg` and `kid` |
+| `verifyES256` | Function | Verify ES256 (ECDSA P-256) JWT signature |
+| `importJWKPublicKey` | Function | Import JWK public key for ES256 verification |
 
 ## Questions & Support
 

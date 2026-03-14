@@ -26,10 +26,13 @@ import { inaiAuthMiddleware } from "@inai-dev/nextjs/middleware";
 export default inaiAuthMiddleware({
   publicRoutes: ["/", "/about", "/login"],
   signInUrl: "/login",
+  // jwksUrl: "https://apiauth.inai.dev/.well-known/jwks.json", // optional override
 });
 
 export const config = { matcher: ["/((?!_next|static|favicon.ico).*)"] };
 ```
+
+> All tokens are cryptographically verified using ES256 (ECDSA P-256). Public keys are fetched from the JWKS endpoint and cached for 5 minutes.
 
 ### 2. Provider
 

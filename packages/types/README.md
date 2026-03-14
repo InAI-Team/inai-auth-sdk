@@ -41,7 +41,7 @@ import type {
 
 ```ts
 import type {
-  InAIAuthConfig,        // Client config (publishableKey, tenantId)
+  InAIAuthConfig,        // Client config (publishableKey, tenantId, jwksUrl)
   InAIMiddlewareConfig,  // Middleware config (publicRoutes, signInUrl, beforeAuth, afterAuth)
   InAIAuthSDKConfig,     // SDK-wide config (signInUrl, signUpUrl, afterSignInUrl, publishableKey)
 } from "@inai-dev/types";
@@ -78,7 +78,7 @@ import type {
 | `ApplicationStats` | Resource | Application statistics |
 | `ApiKeyResource` | Resource | API key data |
 | `PaginatedResult<T>` | Resource | Paginated response |
-| `InAIAuthConfig` | Config | Client configuration |
+| `InAIAuthConfig` | Config | Client configuration (`publishableKey`, `apiUrl`, `tenantId`, `jwksUrl`) |
 | `InAIMiddlewareConfig` | Config | Middleware configuration |
 | `InAIAuthSDKConfig` | Config | SDK global configuration |
 | `LoginParams` | Result | Login request parameters |

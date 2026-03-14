@@ -12,3 +12,4 @@ export const HEADER_AUTHORIZATION = "Authorization";
 export const HEADER_INAI_AUTH = "x-inai-auth";
 
 export const DEFAULT_API_URL = "https://apiauth.inai.dev";
+export const DEFAULT_JWKS_URL = "https://apiauth.inai.dev/.well-known/jwks.json";

@@ -1,45 +1,32 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeAll } from "vitest";
 import { buildAuthObjectFromToken, buildAuthObjectFromClaims } from "../tokens";
+import { JWKSClient } from "@inai-dev/shared";
 
-function makeJWT(payload: Record<string, unknown>): string {
-  const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-  const body = btoa(JSON.stringify(payload));
-  return `${header}.${body}.fake-signature`;
-}
+// We'll test buildAuthObjectFromToken with a mock JWKSClient
+// and buildAuthObjectFromClaims directly (it doesn't need crypto)
 
 describe("buildAuthObjectFromToken", () => {
-  it("returns AuthObject for valid non-expired token", () => {
-    const claims = {
-      sub: "user_1",
-      tenant_id: "t_1",
-      app_id: "app_1",
-      env_id: "env_1",
-      roles: ["admin"],
-      permissions: ["read", "write"],
-      exp: Math.floor(Date.now() / 1000) + 3600,
-    };
-    const token = makeJWT(claims);
-    const auth = buildAuthObjectFromToken(token);
-
-    expect(auth).not.toBeNull();
-    expect(auth!.userId).toBe("user_1");
-    expect(auth!.tenantId).toBe("t_1");
-    expect(auth!.appId).toBe("app_1");
-    expect(auth!.sessionId).toBeNull();
+  it("returns null for garbage token (no kid in header)", async () => {
+    const mockClient = { getKey: vi.fn(), invalidate: vi.fn() } as unknown as JWKSClient;
+    const result = await buildAuthObjectFromToken("garbage", mockClient);
+    expect(result).toBeNull();
+    expect(mockClient.getKey).not.toHaveBeenCalled();
   });
 
-  it("returns null for expired token", () => {
-    const claims = {
-      sub: "user_1",
-      tenant_id: "t_1",
-      exp: Math.floor(Date.now() / 1000) - 3600,
-    };
-    const token = makeJWT(claims);
-    expect(buildAuthObjectFromToken(token)).toBeNull();
-  });
+  it("returns null when kid not found in JWKS", async () => {
+    const header = btoa(JSON.stringify({ alg: "ES256", kid: "unknown-kid", typ: "JWT" }))
+      .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    const payload = btoa(JSON.stringify({ sub: "u1", exp: Math.floor(Date.now() / 1000) + 3600 }))
+      .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    const token = `${header}.${payload}.fake-sig`;
 
-  it("returns null for invalid token", () => {
-    expect(buildAuthObjectFromToken("garbage")).toBeNull();
+    const mockClient = {
+      getKey: vi.fn().mockRejectedValue(new Error("Unknown key")),
+      invalidate: vi.fn(),
+    } as unknown as JWKSClient;
+
+    const result = await buildAuthObjectFromToken(token, mockClient);
+    expect(result).toBeNull();
   });
 });
 

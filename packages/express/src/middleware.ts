@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import type { InAIAuthConfig } from "@inai-dev/types";
 import { InAIAuthClient, buildAuthObjectFromToken } from "@inai-dev/backend";
-import { isTokenExpired } from "@inai-dev/shared";
+import { isTokenExpired, JWKSClient, DEFAULT_API_URL } from "@inai-dev/shared";
 import type { InAIExpressMiddlewareConfig, RequireAuthConfig } from "./types";
 import {
   getTokenFromRequest,
@@ -41,6 +41,10 @@ export function inaiAuthMiddleware(
 
   const client = new InAIAuthClient(authClientConfig);
   const isPlatform = authMode === "platform";
+
+  const jwksUrl = authClientConfig.jwksUrl
+    ?? `${authClientConfig.apiUrl ?? DEFAULT_API_URL}/.well-known/jwks.json`;
+  const jwksClient = new JWKSClient(jwksUrl);
 
   const defaultUnauthorized = (_req: Request, res: Response) => {
     res.status(401).json({ error: "Unauthorized" });
@@ -82,7 +86,7 @@ export function inaiAuthMiddleware(
             : await client.getMe(tokens.access_token);
           setAuthCookies(res, tokens, user);
 
-          const authObj = buildAuthObjectFromToken(tokens.access_token);
+          const authObj = await buildAuthObjectFromToken(tokens.access_token, jwksClient);
           req.auth = authObj;
 
           if (authObj && afterAuth) {
@@ -102,7 +106,7 @@ export function inaiAuthMiddleware(
       return;
     }
 
-    const authObj = buildAuthObjectFromToken(token);
+    const authObj = await buildAuthObjectFromToken(token, jwksClient);
     if (!authObj) {
       handleUnauthorized(req, res, next);
       return;

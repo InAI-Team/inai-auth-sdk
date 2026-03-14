@@ -1,13 +1,43 @@
 import type { JWTClaims, AuthObject } from "@inai-dev/types";
-import { getClaimsFromToken, isTokenExpired } from "@inai-dev/shared";
+import {
+  getClaimsFromToken,
+  isTokenExpired,
+  decodeJWTHeader,
+  verifyES256,
+  JWKSClient,
+} from "@inai-dev/shared";
 
 export { getClaimsFromToken, isTokenExpired };
 
-export function buildAuthObjectFromToken(token: string): AuthObject | null {
-  if (isTokenExpired(token)) return null;
+export async function buildAuthObjectFromToken(
+  token: string,
+  jwksClient: JWKSClient,
+): Promise<AuthObject | null> {
+  // Decode header to get kid
+  const header = decodeJWTHeader(token);
+  if (!header?.kid) return null;
 
-  const claims = getClaimsFromToken(token);
-  if (!claims) return null;
+  let publicKey: CryptoKey;
+  try {
+    publicKey = await jwksClient.getKey(header.kid);
+  } catch {
+    return null;
+  }
+
+  // Verify signature and expiration
+  const claims = await verifyES256(token, publicKey);
+  if (!claims) {
+    // Signature failed with cached key — refetch once in case of key rotation
+    jwksClient.invalidate();
+    try {
+      publicKey = await jwksClient.getKey(header.kid);
+    } catch {
+      return null;
+    }
+    const retryResult = await verifyES256(token, publicKey);
+    if (!retryResult) return null;
+    return buildAuthObjectFromClaims(retryResult, token);
+  }
 
   return buildAuthObjectFromClaims(claims, token);
 }

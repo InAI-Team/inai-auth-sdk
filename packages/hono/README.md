@@ -58,10 +58,15 @@ inaiAuthMiddleware({
   // Custom unauthorized handler (default: 401 JSON response)
   onUnauthorized: (c) => c.json({ error: "Please sign in" }, 401),
 
+  // JWKS endpoint for ES256 token verification (optional)
+  jwksUrl: "https://apiauth.inai.dev/.well-known/jwks.json",
+
   // InAIAuthClient config (optional if using env vars)
   publishableKey: "pk_live_...",
 });
 ```
+
+> All tokens are cryptographically verified using ES256 (ECDSA P-256). Public keys are fetched from the JWKS endpoint and cached for 5 minutes.
 
 ### 2. Route Protection (RBAC)
 

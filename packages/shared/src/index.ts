@@ -3,7 +3,11 @@ export {
   decodeJWTPayload,
   isTokenExpired,
   getClaimsFromToken,
+  decodeJWTHeader,
+  verifyES256,
+  importJWKPublicKey,
 } from "./jwt";
+export { JWKSClient } from "./jwks";
 export {
   COOKIE_AUTH_TOKEN,
   COOKIE_REFRESH_TOKEN,
@@ -16,6 +20,7 @@ export {
   HEADER_AUTHORIZATION,
   HEADER_INAI_AUTH,
   DEFAULT_API_URL,
+  DEFAULT_JWKS_URL,
 } from "./constants";
 export { normalizeApiUrl, buildEndpoint } from "./url";
 export { isValidEmail, isStrongPassword } from "./validators";

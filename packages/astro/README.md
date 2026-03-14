@@ -41,8 +41,11 @@ import { inaiAstroMiddleware } from "@inai-dev/astro/middleware";
 export const onRequest = inaiAstroMiddleware({
   publicRoutes: ["/", "/about", "/login"],
   signInUrl: "/login",
+  // jwksUrl: "https://apiauth.inai.dev/.well-known/jwks.json", // optional override
 });
 ```
+
+> All tokens are cryptographically verified using ES256 (ECDSA P-256). Public keys are fetched from the JWKS endpoint and cached for 5 minutes.
 
 The middleware automatically:
 - Skips public routes, `/api/*`, and `/_*` paths

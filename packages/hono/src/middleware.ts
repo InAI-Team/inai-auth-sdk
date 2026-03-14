@@ -1,7 +1,7 @@
 import type { MiddlewareHandler } from "hono";
 import type { InAIAuthConfig } from "@inai-dev/types";
 import { InAIAuthClient, buildAuthObjectFromToken } from "@inai-dev/backend";
-import { isTokenExpired } from "@inai-dev/shared";
+import { isTokenExpired, JWKSClient, DEFAULT_API_URL } from "@inai-dev/shared";
 import type { InAIHonoMiddlewareConfig, RequireAuthConfig } from "./types";
 import {
   getTokenFromContext,
@@ -41,6 +41,10 @@ export function inaiAuthMiddleware(
   const client = new InAIAuthClient(authClientConfig);
   const isPlatform = authMode === "platform";
 
+  const jwksUrl = authClientConfig.jwksUrl
+    ?? `${authClientConfig.apiUrl ?? DEFAULT_API_URL}/.well-known/jwks.json`;
+  const jwksClient = new JWKSClient(jwksUrl);
+
   const defaultUnauthorized = (c: Parameters<MiddlewareHandler>[0]) =>
     c.json({ error: "Unauthorized" }, 401);
 
@@ -70,7 +74,7 @@ export function inaiAuthMiddleware(
             : await client.getMe(tokens.access_token);
           setAuthCookies(c, tokens, user);
 
-          const authObj = buildAuthObjectFromToken(tokens.access_token);
+          const authObj = await buildAuthObjectFromToken(tokens.access_token, jwksClient);
           c.set("inaiAuth", authObj);
 
           await next();
@@ -84,7 +88,7 @@ export function inaiAuthMiddleware(
       return handleUnauthorized(c);
     }
 
-    const authObj = buildAuthObjectFromToken(token);
+    const authObj = await buildAuthObjectFromToken(token, jwksClient);
     if (!authObj) {
       return handleUnauthorized(c);
     }
