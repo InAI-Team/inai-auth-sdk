@@ -2,6 +2,7 @@ import type { MiddlewareHandler } from "astro";
 import type { AuthObject } from "@inai-dev/types";
 import {
   COOKIE_AUTH_TOKEN,
+  COOKIE_REFRESH_TOKEN,
   getClaimsFromToken,
   isTokenExpired,
 } from "@inai-dev/shared";
@@ -34,9 +35,33 @@ export function inaiAstroMiddleware(
       return next();
     }
 
-    const token = context.cookies.get(COOKIE_AUTH_TOKEN)?.value;
+    let token = context.cookies.get(COOKIE_AUTH_TOKEN)?.value;
 
     if (!token || isTokenExpired(token)) {
+      const refreshToken = context.cookies.get(COOKIE_REFRESH_TOKEN)?.value;
+      if (refreshToken) {
+        try {
+          const refreshUrl = new URL("/api/auth/refresh", context.url.origin);
+          const refreshRes = await fetch(refreshUrl.toString(), {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Cookie: context.request.headers.get("cookie") ?? "",
+            },
+          });
+          if (refreshRes.ok) {
+            const setCookies = refreshRes.headers.getSetCookie?.() ?? [];
+            const response = await next();
+            for (const cookie of setCookies) {
+              response.headers.append("Set-Cookie", cookie);
+            }
+            return response;
+          }
+        } catch {
+          // Refresh failed, redirect to sign-in
+        }
+      }
+
       return context.redirect(
         `${signInUrl}?returnTo=${encodeURIComponent(pathname)}`,
       );

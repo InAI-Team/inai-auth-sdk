@@ -22,6 +22,7 @@
       "require": "./dist/middleware.cjs"
     }
   },
+  "sideEffects": false,
   "files": [
     "dist"
   ],

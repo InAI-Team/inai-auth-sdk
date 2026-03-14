@@ -27,7 +27,7 @@ import { inaiAuthMiddleware } from "@inai-dev/nextjs/middleware";
 npm install @inai-dev/astro
 ```
 
-The `@inai-dev/astro` package provides an integration plugin, middleware for protected routes, and `.astro` components for auth-gated content. Import from the appropriate subpath:
+The `@inai-dev/astro` package provides an integration plugin, middleware for protected routes, and server-side auth helpers. Import from the appropriate subpath:
 
 ```ts
 // Integration plugin
@@ -66,7 +66,6 @@ npm install @inai-dev/backend
 import { InAIAuthClient } from "@inai-dev/backend";
 
 const client = new InAIAuthClient({
-  apiUrl: "https://auth.yourdomain.com",
   publishableKey: "pk_live_xxx",
 });
 
@@ -84,15 +83,9 @@ const apps = await client.listApplications(platformAccessToken);
 
 | Variable | Description | Used By |
 |----------|-------------|---------|
-| `NEXT_PUBLIC_INAI_API_URL` | Base URL of the InAI Auth API | Next.js client + server |
-| `NEXT_PUBLIC_INAI_PUBLISHABLE_KEY` | Environment publishable key | Next.js client + server |
+| `INAI_PUBLISHABLE_KEY` | Environment publishable key | Next.js / Astro (server-only) |
 
-### Astro Equivalents
-
-| Variable | Description |
-|----------|-------------|
-| `INAI_API_URL` | Base URL (server-side only, not exposed to client) |
-| `PUBLIC_INAI_PUBLISHABLE_KEY` | Environment publishable key (exposed to client via `PUBLIC_` prefix) |
+The API URL (`https://apiauth.inai.dev`) is built into the SDK — no configuration needed.
 
 ### How Publishable Keys Work
 
@@ -102,7 +95,7 @@ Each InAI application has one or more environments (e.g., `development`, `produc
 2. Apply the correct auth configuration (password policies, MFA settings, etc.)
 3. Scope user data to the correct environment
 
-Publishable keys are safe to expose in client-side code. They only identify your app -- they cannot be used to read or modify data without a valid JWT.
+The publishable key is **server-only** — it is never exposed to the browser. Client-side code communicates with your app's own `/api/auth/*` endpoints, which handle the key internally.
 
 ## TypeScript
 

@@ -19,12 +19,10 @@ npm install @inai-dev/nextjs @inai-dev/react
 Create or update your `.env.local`:
 
 ```env
-NEXT_PUBLIC_INAI_API_URL=https://auth.yourdomain.com
-NEXT_PUBLIC_INAI_PUBLISHABLE_KEY=pk_live_xxxxxxxxxxxxxxxx
+INAI_PUBLISHABLE_KEY=pk_live_xxxxxxxxxxxxxxxx
 ```
 
-- `NEXT_PUBLIC_INAI_API_URL` - The URL of your InAI Auth API instance
-- `NEXT_PUBLIC_INAI_PUBLISHABLE_KEY` - The publishable key for your application's environment. This is sent as the `X-Publishable-Key` header on all API v1 requests to identify your app and environment.
+- `INAI_PUBLISHABLE_KEY` - The publishable key for your application's environment (found in the admin panel). This is sent as the `X-Publishable-Key` header on all API v1 requests to identify your app and environment. This is a **server-only** variable — it is never exposed to the browser.
 
 ## 3. Add the Auth Provider
 
@@ -55,10 +53,7 @@ InAI uses a catch-all API route to proxy authentication requests (login, registe
 // app/api/auth/[...inai]/route.ts
 import { createAuthRoutes } from "@inai-dev/nextjs/server";
 
-const { GET, POST } = createAuthRoutes({
-  apiUrl: process.env.NEXT_PUBLIC_INAI_API_URL!,
-  publishableKey: process.env.NEXT_PUBLIC_INAI_PUBLISHABLE_KEY!,
-});
+const { GET, POST } = createAuthRoutes();
 
 export { GET, POST };
 ```

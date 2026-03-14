@@ -46,14 +46,13 @@ export function auth(context: AstroContext): AuthObject | null {
 
 export async function currentUser(
   context: AstroContext,
-  config: { apiUrl: string; publishableKey?: string },
+  config?: { publishableKey?: string },
 ): Promise<UserResource | null> {
   const token = context.cookies.get(COOKIE_AUTH_TOKEN)?.value;
   if (!token || isTokenExpired(token)) return null;
 
   const client = new InAIAuthClient({
-    apiUrl: config.apiUrl,
-    publishableKey: config.publishableKey,
+    publishableKey: config?.publishableKey,
   });
 
   try {
@@ -63,3 +62,6 @@ export async function currentUser(
     return null;
   }
 }
+
+export { setAuthCookies, clearAuthCookies } from "./api-routes";
+export type { AstroCookies } from "./api-routes";

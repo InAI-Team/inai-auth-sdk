@@ -14,8 +14,7 @@ HTTP client for communicating with the InAI Auth API.
 import { InAIAuthClient } from "@inai-dev/backend";
 
 const client = new InAIAuthClient({
-  apiUrl: "https://auth.yourdomain.com",
-  publishableKey: "pk_live_xxx",  // optional, required for /api/v1/ routes
+  publishableKey: "pk_live_xxx",  // optional, required for /api/v1/ routes — auto-read from INAI_PUBLISHABLE_KEY env var
   tenantId: "tenant_xxx",         // optional
 });
 ```
@@ -92,8 +91,8 @@ All types are exported from `@inai-dev/types` (and re-exported by `@inai-dev/bac
 
 ```ts
 interface InAIAuthConfig {
-  apiUrl: string;
-  publishableKey?: string;
+  apiUrl?: string;         // default: https://apiauth.inai.dev
+  publishableKey?: string; // auto-read from INAI_PUBLISHABLE_KEY env var
   tenantId?: string;
 }
 ```
@@ -618,8 +617,8 @@ interface InAIAuthSDKConfig {
   signUpUrl?: string;       // default: "/register"
   afterSignInUrl?: string;  // default: "/"
   afterSignOutUrl?: string; // default: "/login"
-  apiUrl?: string;          // default: from NEXT_PUBLIC_INAI_API_URL env var
-  publishableKey?: string;  // default: from NEXT_PUBLIC_INAI_PUBLISHABLE_KEY env var
+  apiUrl?: string;          // default: https://apiauth.inai.dev
+  publishableKey?: string;  // default: from INAI_PUBLISHABLE_KEY env var
 }
 ```
 

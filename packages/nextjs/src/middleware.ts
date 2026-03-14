@@ -11,7 +11,7 @@ import {
 } from "@inai-dev/shared";
 
 export interface InAIMiddlewareConfig {
-  apiUrl?: string;
+  authMode?: "app" | "platform";
   publicRoutes?: string[] | ((req: NextRequest) => boolean);
   signInUrl?: string;
   beforeAuth?: (req: NextRequest) => NextResponse | void;
@@ -181,7 +181,7 @@ async function runAuthCheck(
 
 export function inaiAuthMiddleware(config: InAIMiddlewareConfig = {}) {
   const {
-    apiUrl = DEFAULT_API_URL,
+    authMode = "app",
     publicRoutes = [],
     signInUrl = "/login",
     beforeAuth,
@@ -202,6 +202,7 @@ export function inaiAuthMiddleware(config: InAIMiddlewareConfig = {}) {
       return NextResponse.next();
     }
 
+    const apiUrl = authMode === "platform" ? DEFAULT_API_URL : undefined;
     const { authObj, response } = await runAuthCheck(req, signInUrl, apiUrl);
     if (response) return response;
     if (!authObj)
@@ -223,7 +224,7 @@ export function withInAIAuth(
   config: InAIMiddlewareConfig = {},
 ): (req: NextRequest) => Promise<NextResponse> {
   const {
-    apiUrl = DEFAULT_API_URL,
+    authMode = "app",
     publicRoutes = [],
     signInUrl = "/login",
     beforeAuth,
@@ -243,6 +244,7 @@ export function withInAIAuth(
     const isPublic = isPublicRoute(req, publicRoutes, builtinPublic);
 
     if (!isPublic) {
+      const apiUrl = authMode === "platform" ? DEFAULT_API_URL : undefined;
       const { authObj, response } = await runAuthCheck(req, signInUrl, apiUrl);
       if (response) return response;
       if (!authObj)

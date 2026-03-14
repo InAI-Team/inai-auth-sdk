@@ -113,7 +113,7 @@ function RegisterForm() {
 ```ts
 import { InAIAuthClient } from "@inai-dev/backend";
 
-const client = new InAIAuthClient({ apiUrl: "..." });
+const client = new InAIAuthClient();
 await client.verifyEmail(token);
 ```
 
@@ -276,8 +276,7 @@ The password reset flow uses the core `InAIAuthClient` directly since it does no
 import { InAIAuthClient } from "@inai-dev/backend";
 
 const client = new InAIAuthClient({
-  apiUrl: process.env.NEXT_PUBLIC_INAI_API_URL!,
-  publishableKey: process.env.NEXT_PUBLIC_INAI_PUBLISHABLE_KEY!,
+  publishableKey: process.env.INAI_PUBLISHABLE_KEY!,
 });
 
 async function handleForgotPassword(email: string) {
@@ -314,7 +313,7 @@ import { OrganizationSwitcher } from "@inai-dev/nextjs";
 Or manually:
 
 ```ts
-const client = new InAIAuthClient({ apiUrl, publishableKey });
+const client = new InAIAuthClient();
 const newTokens = await client.setActiveOrganization(accessToken, orgId);
 ```
 
@@ -331,9 +330,7 @@ Admin panels use a separate auth flow that hits the `/api/platform/auth/*` endpo
 // app/api/auth/[...inai]/route.ts (in admin panel)
 import { createPlatformAuthRoutes } from "@inai-dev/nextjs/server";
 
-const { GET, POST } = createPlatformAuthRoutes({
-  apiUrl: process.env.NEXT_PUBLIC_INAI_API_URL!,
-});
+const { GET, POST } = createPlatformAuthRoutes();
 
 export { GET, POST };
 ```

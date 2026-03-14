@@ -26,12 +26,10 @@ export function getAuthConfig(): ResolvedConfig {
     afterSignOutUrl: userConfig.afterSignOutUrl ?? defaults.afterSignOutUrl,
     apiUrl:
       userConfig.apiUrl ??
-      process.env.INAI_API_URL ??
-      process.env.NEXT_PUBLIC_INAI_API_URL ??
       defaults.apiUrl,
     publishableKey:
       userConfig.publishableKey ??
-      process.env.NEXT_PUBLIC_INAI_PUBLISHABLE_KEY ??
+      process.env.INAI_PUBLISHABLE_KEY ??
       defaults.publishableKey,
   };
 }

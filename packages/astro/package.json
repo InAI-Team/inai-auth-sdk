@@ -17,11 +17,15 @@
     "./server": {
       "types": "./dist/server.d.ts",
       "import": "./dist/server.js"
+    },
+    "./api-routes": {
+      "types": "./dist/api-routes.d.ts",
+      "import": "./dist/api-routes.js"
     }
   },
+  "sideEffects": false,
   "files": [
-    "dist",
-    "src/components"
+    "dist"
   ],
   "scripts": {
     "build": "tsup",
@@ -33,7 +37,7 @@
   "dependencies": {
     "@inai-dev/types": "^1.0.0",
     "@inai-dev/shared": "^1.0.0",
-    "@inai-dev/backend": "^1.0.0"
+    "@inai-dev/backend": "^1.1.0"
   },
   "peerDependencies": {
     "astro": ">=4.0.0"

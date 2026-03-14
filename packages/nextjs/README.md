@@ -11,18 +11,9 @@ npm install @inai-dev/nextjs
 ## Environment Variables
 
 ```env
-# Required — your publishable key (client-side accessible)
-NEXT_PUBLIC_INAI_PUBLISHABLE_KEY=pk_live_...
-
-# Optional — API URL overrides (defaults to https://apiauth.inai.dev)
-INAI_API_URL=https://apiauth.inai.dev
-NEXT_PUBLIC_INAI_API_URL=https://apiauth.inai.dev
+# Required — your publishable key (server-only, NOT exposed to the browser)
+INAI_PUBLISHABLE_KEY=pk_live_...
 ```
-
-The API URL is resolved in this order:
-1. Explicit config via `configureAuth({ apiUrl: "..." })`
-2. `INAI_API_URL` or `NEXT_PUBLIC_INAI_API_URL` environment variable
-3. Default: `https://apiauth.inai.dev`
 
 ## Setup
 
@@ -72,17 +63,6 @@ Handles the following endpoints automatically:
 - `POST /api/auth/mfa-challenge` — MFA verification
 - `POST /api/auth/refresh` — Token refresh
 - `POST /api/auth/logout` — User logout
-
-#### Platform API Routes
-
-For multi-tenant platform authentication:
-
-```ts
-// app/api/auth/[...inai]/route.ts
-import { createPlatformAuthRoutes } from "@inai-dev/nextjs/server";
-
-export const { GET, POST } = createPlatformAuthRoutes();
-```
 
 ## Server-Side Auth
 
@@ -297,12 +277,11 @@ configureAuth({
   signUpUrl: "/register",
   afterSignInUrl: "/dashboard",
   afterSignOutUrl: "/",
-  apiUrl: "https://apiauth.inai.dev",
   publishableKey: "pk_live_...",
 });
 
 const config = getAuthConfig();
-// { signInUrl, signUpUrl, afterSignInUrl, afterSignOutUrl, apiUrl, publishableKey }
+// { signInUrl, signUpUrl, afterSignInUrl, afterSignOutUrl, publishableKey }
 ```
 
 ### `createRouteMatcher()`
@@ -374,8 +353,7 @@ export default withInAIAuth(
 |---|---|---|
 | `auth` | Function | Get `ServerAuthObject` |
 | `currentUser` | Function | Get current user |
-| `createAuthRoutes` | Function | App user auth routes |
-| `createPlatformAuthRoutes` | Function | Platform auth routes |
+| `createAuthRoutes` | Function | Auth route handlers |
 | `configureAuth` | Function | Set global config |
 | `getAuthConfig` | Function | Get resolved config |
 | `setAuthCookies` | Function | Set auth cookies |

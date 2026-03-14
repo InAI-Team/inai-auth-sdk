@@ -48,15 +48,12 @@ For applications where end users sign in:
 // app/api/auth/[...inai]/route.ts
 import { createAuthRoutes } from "@inai-dev/nextjs/server";
 
-const { GET, POST } = createAuthRoutes({
-  apiUrl: process.env.NEXT_PUBLIC_INAI_API_URL!,
-  publishableKey: process.env.NEXT_PUBLIC_INAI_PUBLISHABLE_KEY!,
-});
+const { GET, POST } = createAuthRoutes();
 
 export { GET, POST };
 ```
 
-This creates handlers for:
+The SDK reads `INAI_PUBLISHABLE_KEY` from `process.env` automatically. This creates handlers for:
 - `POST /api/auth/login` - Calls the InAI API login endpoint, sets auth cookies on success
 - `POST /api/auth/register` - Creates a new user, sets cookies if no email verification required
 - `POST /api/auth/mfa-challenge` - Verifies a TOTP code during MFA flow
@@ -71,9 +68,7 @@ For admin panels where platform users (developers/operators) sign in:
 // app/api/auth/[...inai]/route.ts
 import { createPlatformAuthRoutes } from "@inai-dev/nextjs/server";
 
-const { GET, POST } = createPlatformAuthRoutes({
-  apiUrl: process.env.NEXT_PUBLIC_INAI_API_URL!,
-});
+const { GET, POST } = createPlatformAuthRoutes();
 
 export { GET, POST };
 ```
@@ -254,8 +249,7 @@ configureAuth({
   signUpUrl: "/sign-up",
   afterSignInUrl: "/dashboard",
   afterSignOutUrl: "/sign-in",
-  apiUrl: process.env.NEXT_PUBLIC_INAI_API_URL,
-  publishableKey: process.env.NEXT_PUBLIC_INAI_PUBLISHABLE_KEY,
+  publishableKey: process.env.INAI_PUBLISHABLE_KEY,
 });
 ```
 

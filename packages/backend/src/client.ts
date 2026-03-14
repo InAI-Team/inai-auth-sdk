@@ -20,7 +20,10 @@ export class InAIAuthClient {
 
   constructor(config: InAIAuthConfig = {}) {
     this.apiUrl = (config.apiUrl || DEFAULT_API_URL).replace(/\/$/, "");
-    this.publishableKey = config.publishableKey ?? "";
+    this.publishableKey =
+      config.publishableKey ??
+      (typeof process !== "undefined" ? process.env?.INAI_PUBLISHABLE_KEY : undefined) ??
+      "";
     this.tenantId = config.tenantId;
   }
 

@@ -7,37 +7,35 @@ Guide for integrating InAI Auth into an Astro 6+ application using the `@inai-de
 The `@inai-dev/astro` package provides:
 
 - `inaiAuth()` - Astro integration plugin
-- `inaiAstroMiddleware` - Middleware for protecting routes
+- `inaiAstroMiddleware` - Middleware for protecting routes with automatic token refresh
 - `auth()` / `currentUser()` - Server-side auth helpers
-- `<SignedIn>` / `<SignedOut>` - Astro components (`.astro` files)
+- `createAuthRoutes()` - API route handlers for login, register, logout, refresh, MFA
 
-## Integration Plugin
+## Environment Variables
 
-### astro.config.ts
+```env
+# Required — your publishable key (server-only)
+INAI_PUBLISHABLE_KEY=pk_live_...
+```
+
+The API URL (`https://apiauth.inai.dev`) is built into the SDK — no configuration needed.
+
+## Setup
+
+### 1. Add Integration
 
 ```ts
+// astro.config.mjs
 import { defineConfig } from "astro/config";
 import { inaiAuth } from "@inai-dev/astro";
 
 export default defineConfig({
-  integrations: [
-    inaiAuth({
-      apiUrl: import.meta.env.INAI_API_URL,
-      publishableKey: import.meta.env.PUBLIC_INAI_PUBLISHABLE_KEY,
-    }),
-  ],
-  output: "server", // SSR required for auth
+  output: "server", // Required — SSR mode for auth
+  integrations: [inaiAuth()],
 });
 ```
 
-The integration plugin will:
-1. Register the middleware automatically
-2. Inject auth helpers into `Astro.locals`
-3. Configure cookie handling for the Astro request lifecycle
-
-## Middleware
-
-### Using inaiAstroMiddleware
+### 2. Middleware
 
 ```ts
 // src/middleware.ts
@@ -49,7 +47,7 @@ export const onRequest = inaiAstroMiddleware({
 });
 ```
 
-### Composing with other middleware
+#### Composing with other middleware
 
 ```ts
 // src/middleware.ts
@@ -66,33 +64,49 @@ export const onRequest = sequence(authMiddleware, myOtherMiddleware);
 
 The middleware will:
 1. Check for the `auth_token` cookie
-2. Decode JWT claims (without verifying the signature -- the API is the security boundary)
+2. Decode JWT claims (without verifying the signature — the API is the security boundary)
 3. Populate `Astro.locals.auth` with an `AuthObject`
 4. Redirect unauthenticated users on protected routes to `signInUrl`
 5. Attempt token refresh if the access token is expired but a refresh token exists
+
+### 3. API Routes
+
+```ts
+// src/pages/api/auth/[path].ts
+import { createAuthRoutes } from "@inai-dev/astro/api-routes";
+
+const routes = createAuthRoutes({
+  publishableKey: process.env.INAI_PUBLISHABLE_KEY,
+});
+
+export const ALL = routes.ALL;
+```
+
+Handles the following endpoints automatically:
+- `POST /api/auth/login` — User login (returns `{ user }` or `{ mfa_required, mfa_token }`)
+- `POST /api/auth/register` — User registration
+- `POST /api/auth/mfa-challenge` — MFA verification
+- `POST /api/auth/refresh` — Token refresh (also called automatically by middleware)
+- `POST /api/auth/logout` — User logout
 
 ## Server-Side Auth Helpers
 
 ### auth()
 
-Available in `.astro` pages, server endpoints, and middleware:
+Returns the `AuthObject` from the current request context (populated by middleware). This is a synchronous function.
 
 ```astro
 ---
 // src/pages/dashboard.astro
 import { auth } from "@inai-dev/astro/server";
 
-const { userId, has, protect } = await auth(Astro);
+const authObj = auth(Astro);
 
-// Redirect if not signed in
-if (!userId) {
+if (!authObj?.userId) {
   return Astro.redirect("/login");
 }
 
-// Or use protect() which redirects automatically
-protect();
-
-const canManage = has({ role: "admin" });
+const canManage = authObj.has({ role: "admin" });
 ---
 
 <h1>Dashboard</h1>
@@ -101,18 +115,17 @@ const canManage = has({ role: "admin" });
 
 ### currentUser()
 
+Fetches the full `UserResource` from the API.
+
 ```astro
 ---
 import { currentUser } from "@inai-dev/astro/server";
 
 const user = await currentUser(Astro);
+if (!user) return Astro.redirect("/login");
 ---
 
-{user ? (
-  <p>Hello, {user.firstName}</p>
-) : (
-  <a href="/login">Sign in</a>
-)}
+<p>{user.email}</p>
 ```
 
 ### In API Endpoints
@@ -123,71 +136,75 @@ import type { APIRoute } from "astro";
 import { auth } from "@inai-dev/astro/server";
 
 export const GET: APIRoute = async (context) => {
-  const { userId, protect } = await auth(context);
-  protect();
+  const authObj = auth(context);
+  if (!authObj?.userId) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+  }
 
-  // Fetch user data...
-  return new Response(JSON.stringify({ userId }), {
+  return new Response(JSON.stringify({ userId: authObj.userId }), {
     headers: { "Content-Type": "application/json" },
   });
 };
 ```
 
-## Astro Components
+### Cookie Helpers
 
-### SignedIn / SignedOut
+For advanced use cases (custom auth flows, manual token management):
 
-```astro
----
-// src/pages/index.astro
-import { SignedIn, SignedOut } from "@inai-dev/astro/components";
----
+```ts
+import { setAuthCookies, clearAuthCookies } from "@inai-dev/astro/server";
 
-<SignedIn>
-  <p>Welcome back!</p>
-  <a href="/dashboard">Go to dashboard</a>
-</SignedIn>
+// Set auth cookies after manual authentication
+setAuthCookies(Astro.cookies, tokens, user);
 
-<SignedOut>
-  <p>Please sign in to continue.</p>
-  <a href="/login">Sign in</a>
-</SignedOut>
+// Clear all auth cookies (manual logout)
+clearAuthCookies(Astro.cookies);
 ```
 
-These are `.astro` components that read auth state from `Astro.locals` and conditionally render their slot content. They work without JavaScript on the client.
+## Calling Auth From the Client
+
+```ts
+// Login
+const res = await fetch("/api/auth/login", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ email, password }),
+});
+const { user, mfa_required, mfa_token } = await res.json();
+
+// MFA (if required)
+await fetch("/api/auth/mfa-challenge", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ mfa_token, code }),
+});
+
+// Logout
+await fetch("/api/auth/logout", { method: "POST" });
+```
 
 ## Alternative: Using @inai-dev/backend Directly
 
-You can also use the core `InAIAuthClient` from `@inai-dev/backend` directly in Astro server endpoints and pages without the `@inai-dev/astro` integration:
-
-### Manual Client Setup
+You can use the core `InAIAuthClient` from `@inai-dev/backend` directly in Astro server endpoints without the `@inai-dev/astro` integration:
 
 ```ts
 // src/lib/auth-client.ts
 import { InAIAuthClient } from "@inai-dev/backend";
 
 export const authClient = new InAIAuthClient({
-  apiUrl: import.meta.env.INAI_API_URL,
-  publishableKey: import.meta.env.PUBLIC_INAI_PUBLISHABLE_KEY,
+  publishableKey: process.env.INAI_PUBLISHABLE_KEY,
 });
 ```
 
-### Manual Cookie Handling
-
 ```astro
 ---
-// src/pages/dashboard.astro
 import { authClient } from "../lib/auth-client";
 
 const token = Astro.cookies.get("auth_token")?.value;
-
-if (!token) {
-  return Astro.redirect("/login");
-}
+if (!token) return Astro.redirect("/login");
 
 try {
   const { data: user } = await authClient.getMe(token);
-  // user is available for rendering
 } catch {
   return Astro.redirect("/login");
 }
@@ -195,75 +212,3 @@ try {
 
 <h1>Dashboard</h1>
 ```
-
-### Manual Login Endpoint
-
-```ts
-// src/pages/api/auth/login.ts
-import type { APIRoute } from "astro";
-import { authClient } from "../../../lib/auth-client";
-
-export const POST: APIRoute = async ({ request, cookies }) => {
-  const body = await request.json();
-
-  try {
-    const result = await authClient.login({
-      email: body.email,
-      password: body.password,
-    });
-
-    if (result.mfa_required) {
-      return new Response(JSON.stringify({
-        mfa_required: true,
-        mfa_token: result.mfa_token,
-      }), { status: 200, headers: { "Content-Type": "application/json" } });
-    }
-
-    const tokens = result;
-    const { data: user } = await authClient.getMe(tokens.access_token!);
-
-    cookies.set("auth_token", tokens.access_token!, {
-      httpOnly: true,
-      secure: import.meta.env.PROD,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 7 * 24 * 60 * 60,
-    });
-
-    cookies.set("refresh_token", tokens.refresh_token!, {
-      httpOnly: true,
-      secure: import.meta.env.PROD,
-      sameSite: "strict",
-      path: "/api/auth",
-      maxAge: 7 * 24 * 60 * 60,
-    });
-
-    cookies.set("auth_session", JSON.stringify({ user, expiresAt: new Date(Date.now() + (tokens.expires_in ?? 3600) * 1000).toISOString() }), {
-      httpOnly: false,
-      secure: import.meta.env.PROD,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 7 * 24 * 60 * 60,
-    });
-
-    return new Response(JSON.stringify({ user }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: "Login failed" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-};
-```
-
-## Environment Variables
-
-| Variable | Astro Prefix | Description |
-|----------|-------------|-------------|
-| `INAI_API_URL` | None (server only) | InAI Auth API base URL |
-| `PUBLIC_INAI_PUBLISHABLE_KEY` | `PUBLIC_` (client-exposed) | Environment publishable key |
-
-In Astro, variables without the `PUBLIC_` prefix are only available server-side. The API URL should remain server-only to avoid exposing internal infrastructure URLs.
