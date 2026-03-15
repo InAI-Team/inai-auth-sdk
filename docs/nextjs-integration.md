@@ -191,7 +191,7 @@ export default withInAIAuth(intlMiddleware, {
 
 ### auth()
 
-Reads JWT claims from the `auth_token` cookie. Does NOT verify the JWT signature -- that is the API's responsibility. This function is for reading claims to make server-side rendering/routing decisions.
+Reads JWT claims from the `auth_token` cookie. The JWT signature was already verified by the middleware using ES256 via JWKS. This function reads the pre-verified claims to make server-side rendering/routing decisions.
 
 ```tsx
 // In a Server Component

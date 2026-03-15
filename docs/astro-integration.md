@@ -64,9 +64,9 @@ export const onRequest = sequence(authMiddleware, myOtherMiddleware);
 
 The middleware will:
 1. Check for the `auth_token` cookie
-2. Decode JWT claims (without verifying the signature — the API is the security boundary)
+2. Verify the JWT signature using ES256 via JWKS (public keys cached for 5 minutes, with automatic retry on key rotation)
 3. Populate `Astro.locals.auth` with an `AuthObject`
-4. Redirect unauthenticated users on protected routes to `signInUrl`
+4. Redirect unauthenticated users on protected routes to `signInUrl` (preserving the original URL via `?returnTo=`)
 5. Attempt token refresh if the access token is expired but a refresh token exists
 
 ### 3. API Routes

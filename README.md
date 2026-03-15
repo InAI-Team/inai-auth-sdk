@@ -111,6 +111,10 @@ npm run release
 - [API Reference](./docs/api-reference.md)
 - [Architecture](./docs/architecture.md)
 
+## Questions & Support
+
+Visit [https://inai.dev](https://inai.dev) for documentation, guides, and support.
+
 ## License
 
 [MIT](./LICENSE)

@@ -570,7 +570,7 @@ Server-only exports. Do not import in client components.
 async function auth(): Promise<ServerAuthObject>
 ```
 
-Reads JWT claims from the `auth_token` httpOnly cookie. Does not verify the signature. See [Architecture](./architecture.md) for why.
+Reads JWT claims from the `auth_token` httpOnly cookie. The JWT signature was already verified by the middleware using ES256 via JWKS. See [Architecture](./architecture.md) for the layered security model.
 
 ### currentUser()
 

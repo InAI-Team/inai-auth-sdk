@@ -1,11 +1,16 @@
 import type { JWTClaims } from "@inai-dev/types";
 
-function base64urlToString(str: string): string {
+function base64urlDecode(str: string): Uint8Array {
   let padded = str.replace(/-/g, "+").replace(/_/g, "/");
   const remainder = padded.length % 4;
   if (remainder === 2) padded += "==";
   else if (remainder === 3) padded += "=";
-  return atob(padded);
+  const binString = atob(padded);
+  return Uint8Array.from(binString, (ch) => ch.charCodeAt(0));
+}
+
+function base64urlToString(str: string): string {
+  return new TextDecoder().decode(base64urlDecode(str));
 }
 
 export function decodeJWTPayload(token: string): JWTClaims | null {
@@ -36,15 +41,6 @@ export function decodeJWTHeader(token: string): { alg: string; kid: string; typ?
   } catch {
     return null;
   }
-}
-
-function base64urlDecode(str: string): Uint8Array {
-  let padded = str.replace(/-/g, "+").replace(/_/g, "/");
-  const remainder = padded.length % 4;
-  if (remainder === 2) padded += "==";
-  else if (remainder === 3) padded += "=";
-  const binString = atob(padded);
-  return Uint8Array.from(binString, (ch) => ch.charCodeAt(0));
 }
 
 export async function importJWKPublicKey(jwk: JsonWebKey): Promise<CryptoKey> {

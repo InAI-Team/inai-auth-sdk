@@ -79,14 +79,14 @@ export function inaiAstroMiddleware(
     // Verify token signature with JWKS
     const header = decodeJWTHeader(token);
     if (!header?.kid) {
-      return context.redirect(signInUrl);
+      return context.redirect(`${signInUrl}?returnTo=${encodeURIComponent(pathname)}`);
     }
 
     let publicKey: CryptoKey;
     try {
       publicKey = await jwksClient.getKey(header.kid);
     } catch {
-      return context.redirect(signInUrl);
+      return context.redirect(`${signInUrl}?returnTo=${encodeURIComponent(pathname)}`);
     }
 
     let claims = await verifyES256(token, publicKey);
@@ -96,11 +96,11 @@ export function inaiAstroMiddleware(
       try {
         publicKey = await jwksClient.getKey(header.kid);
       } catch {
-        return context.redirect(signInUrl);
+        return context.redirect(`${signInUrl}?returnTo=${encodeURIComponent(pathname)}`);
       }
       claims = await verifyES256(token, publicKey);
       if (!claims) {
-        return context.redirect(signInUrl);
+        return context.redirect(`${signInUrl}?returnTo=${encodeURIComponent(pathname)}`);
       }
     }
 

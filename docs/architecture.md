@@ -175,20 +175,26 @@ interface JWTClaims {
 - **`app_user`**: Issued to end users of your application. Includes `app_id` and `env_id` to scope the user to a specific application environment.
 - **`platform`**: Issued to developers/operators who manage applications via the admin panel. Does not include `app_id` or `env_id`.
 
-### JWT Decoding (Not Verification)
+### JWT Verification (ES256 via JWKS)
 
-The SDK decodes JWTs by base64-decoding the payload segment. It does NOT verify the JWT signature. This is intentional:
+The SDK verifies JWT signatures using ES256 (ECDSA P-256) in all framework middlewares (Next.js, Astro, Express, Hono). Public keys are fetched from the JWKS endpoint (`/.well-known/jwks.json`) and cached via the `JWKSClient`:
+
+- **Cache TTL:** 5 minutes (configurable)
+- **Rate limiting:** minimum 10 seconds between fetch attempts, including failed attempts
+- **Key rotation:** on signature verification failure, the client invalidates its cache and retries with fresh keys (respecting the rate limit)
+- **Error throttling:** failed fetches update `lastAttemptedAt` to prevent traffic amplification against a downed endpoint
+
+For lightweight operations that don't require signature verification (e.g., reading claims for client-side rendering), the SDK also provides `decodeJWTPayload()`:
 
 ```ts
 function decodeJWTPayload(token: string): JWTClaims | null {
   const parts = token.split(".");
   if (parts.length !== 3) return null;
-  const payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-  return JSON.parse(atob(payload));
+  return JSON.parse(base64urlToString(parts[1]));
 }
 ```
 
-See the Security Model section below for why this is safe.
+See the Security Model section below for the layered approach.
 
 ## Multi-Tenant Hierarchy
 
@@ -225,14 +231,14 @@ The `X-Publishable-Key` header sent on `/api/v1/*` requests identifies which app
 
 ## Security Model
 
-### The API is the Security Boundary
+### Layered Security Model
 
-The SDK does not verify JWT signatures. This is a deliberate architectural decision:
+The SDK uses a layered approach to JWT security:
 
-1. **The JWT secret is never exposed to the client or the Next.js server**. Only the InAI Auth API (running on Cloudflare Workers) has access to `JWT_SECRET` and `PLATFORM_JWT_SECRET`.
-2. **Every API request is validated server-side**. When the SDK calls `getMe()`, `refresh()`, or any other API method, the Auth API verifies the JWT signature before processing the request.
-3. **Client-side JWT reading is for UX, not security**. The SDK decodes the JWT to extract claims (userId, roles, permissions) for rendering decisions. If a user tampered with the JWT payload in the `auth_token` cookie, the next API call would reject it.
-4. **The middleware uses JWT claims for routing, not authorization**. If the middleware reads a role from the JWT to redirect a user, the worst case of tampering is that the user sees a page they cannot actually use -- any data fetches on that page would fail because the API rejects the invalid token.
+1. **Middleware verifies JWT signatures using ES256 (ECDSA P-256)**. All framework middlewares (Next.js, Astro, Express, Hono) cryptographically verify tokens using public keys fetched from the JWKS endpoint. On verification failure, the middleware invalidates the JWKS cache and retries once to handle key rotation gracefully.
+2. **Every API request is also validated server-side**. When the SDK calls `getMe()`, `refresh()`, or any other API method, the Auth API independently verifies the JWT signature before processing the request.
+3. **Client-side JWT reading is for UX, not security**. The SDK decodes the JWT to extract claims (userId, roles, permissions) for rendering decisions. If a user tampered with the JWT payload in the `auth_token` cookie, both the middleware and the next API call would reject it.
+4. **The `auth()` server function reads claims from middleware-verified tokens**. Since the middleware already verified the JWT signature, the `auth()` helper in Next.js/Astro reads claims without re-verifying, trusting the middleware's prior validation.
 
 ### Cookie Security Summary
 
@@ -242,7 +248,7 @@ The SDK does not verify JWT signatures. This is a deliberate architectural decis
 | CSRF on refresh | `refresh_token` uses `sameSite: strict` and is path-scoped to `/api/auth` |
 | Token interception | `secure: true` in production ensures cookies are only sent over HTTPS |
 | Session tampering | `auth_session` is readable but is not a security credential. All auth decisions are made server-side using the httpOnly JWT. |
-| JWT forgery | JWT signatures are verified by the Auth API on every request. The SDK only decodes (does not verify) for client-side UX purposes. |
+| JWT forgery | JWT signatures are verified by ES256 in the middleware (via JWKS) and again by the Auth API on every request. Client-side code only decodes (does not verify) for UX purposes. |
 
 ### Permission Cache
 

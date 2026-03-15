@@ -47,7 +47,7 @@ const publicKey = await jwks.getKey(header.kid);
 const claims = await verifyES256(token, publicKey);
 ```
 
-The `JWKSClient` fetches and caches public keys from the JWKS endpoint (default TTL: 5 minutes) with built-in rate limiting to prevent refetch abuse.
+The `JWKSClient` fetches and caches public keys from the JWKS endpoint (default TTL: 5 minutes) with built-in rate limiting to prevent refetch abuse. Failed fetch attempts are also throttled to avoid amplifying traffic against a downed endpoint.
 
 ### Validators
 

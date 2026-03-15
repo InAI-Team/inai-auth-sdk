@@ -16,6 +16,7 @@ export class JWKSClient {
   private cache: Map<string, CryptoKey> = new Map();
   private rawKeys: Map<string, JsonWebKey> = new Map();
   private lastFetchedAt = 0;
+  private lastAttemptedAt = 0;
   private pendingInvalidation = false;
   private jwksUrl: string;
   private cacheTTL: number;
@@ -34,8 +35,8 @@ export class JWKSClient {
       if (cached) return cached;
     }
 
-    // Only refetch if minRefetchInterval has passed since last fetch
-    if (Date.now() - this.lastFetchedAt >= this.minRefetchInterval) {
+    // Only refetch if minRefetchInterval has passed since last attempt
+    if (Date.now() - this.lastAttemptedAt >= this.minRefetchInterval) {
       await this.fetchKeys();
       this.pendingInvalidation = false;
     } else {
@@ -54,6 +55,7 @@ export class JWKSClient {
   }
 
   private async fetchKeys(): Promise<void> {
+    this.lastAttemptedAt = Date.now();
     const res = await fetch(this.jwksUrl);
     if (!res.ok) {
       throw new Error(`Failed to fetch JWKS: ${res.status}`);
