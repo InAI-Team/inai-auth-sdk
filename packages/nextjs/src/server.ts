@@ -42,6 +42,8 @@ export async function auth(): Promise<ServerAuthObject> {
       orgId: null,
       orgRole: null,
       sessionId: null,
+      roles: [],
+      permissions: [],
       getToken: async () => null,
       has: () => false,
       protect: () => {
@@ -61,6 +63,8 @@ export async function auth(): Promise<ServerAuthObject> {
       orgId: null,
       orgRole: null,
       sessionId: null,
+      roles: [],
+      permissions: [],
       getToken: async () => null,
       has: () => false,
       protect: () => {
@@ -88,6 +92,8 @@ export async function auth(): Promise<ServerAuthObject> {
     orgId: claims.org_id ?? null,
     orgRole: claims.org_role ?? null,
     sessionId: null,
+    roles,
+    permissions,
     isSignedIn: true,
     getToken: async () => token,
     has,
@@ -101,6 +107,8 @@ export async function auth(): Promise<ServerAuthObject> {
     orgId: claims.org_id ?? null,
     orgRole: claims.org_role ?? null,
     sessionId: null,
+    roles,
+    permissions,
     getToken: async () => token,
     has,
     protect: (params?: {

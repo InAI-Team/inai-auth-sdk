@@ -6,6 +6,8 @@ export interface AuthObject {
   orgId: string | null;
   orgRole: string | null;
   sessionId: string | null;
+  roles: string[];
+  permissions: string[];
   getToken: () => Promise<string | null>;
   has: (params: { role?: string; permission?: string }) => boolean;
 }
@@ -27,6 +29,8 @@ export interface ProtectedAuthObject {
   orgId: string | null;
   orgRole: string | null;
   sessionId: string | null;
+  roles: string[];
+  permissions: string[];
   isSignedIn: true;
   getToken: () => Promise<string>;
   has: (params: { role?: string; permission?: string }) => boolean;

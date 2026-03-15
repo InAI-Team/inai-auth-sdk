@@ -88,4 +88,34 @@ describe("buildAuthObjectFromClaims", () => {
     expect(auth.appId).toBeNull();
     expect(auth.envId).toBeNull();
   });
+
+  it("exposes roles and permissions as direct arrays", () => {
+    const claims = {
+      sub: "user_1",
+      tenant_id: "t_1",
+      type: "app_user" as const,
+      email: "test@test.com",
+      roles: ["admin", "editor"],
+      permissions: ["read", "write"],
+      iat: 0,
+      exp: 9999999999,
+    };
+    const auth = buildAuthObjectFromClaims(claims, "token");
+    expect(auth.roles).toEqual(["admin", "editor"]);
+    expect(auth.permissions).toEqual(["read", "write"]);
+  });
+
+  it("defaults roles and permissions to empty arrays when missing from claims", () => {
+    const claims = {
+      sub: "user_1",
+      tenant_id: "t_1",
+      type: "app_user" as const,
+      email: "test@test.com",
+      iat: 0,
+      exp: 9999999999,
+    } as any;
+    const auth = buildAuthObjectFromClaims(claims, "token");
+    expect(auth.roles).toEqual([]);
+    expect(auth.permissions).toEqual([]);
+  });
 });

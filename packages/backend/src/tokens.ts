@@ -57,6 +57,8 @@ export function buildAuthObjectFromClaims(
     orgId: claims.org_id ?? null,
     orgRole: claims.org_role ?? null,
     sessionId: null,
+    roles,
+    permissions,
     getToken: async () => token,
     has: (params: { role?: string; permission?: string }) => {
       if (params.role && roles.includes(params.role)) return true;

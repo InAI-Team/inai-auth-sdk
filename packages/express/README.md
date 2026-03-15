@@ -151,6 +151,8 @@ app.get("/api/me", (req, res) => {
 | `orgId` | `string \| null` | Active organization ID |
 | `orgRole` | `string \| null` | Role in active organization |
 | `sessionId` | `string \| null` | Session ID |
+| `roles` | `string[]` | User's global roles |
+| `permissions` | `string[]` | User's global permissions |
 | `getToken()` | `() => Promise<string \| null>` | Get the access token |
 | `has(params)` | `({ role?, permission? }) => boolean` | Check role or permission |
 

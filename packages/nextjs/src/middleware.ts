@@ -112,6 +112,8 @@ async function buildAuthObject(
     orgId: claims.org_id ?? null,
     orgRole: claims.org_role ?? null,
     sessionId: null,
+    roles,
+    permissions,
     getToken: async () => token,
     has: (params: { role?: string; permission?: string }) => {
       if (params.role && roles.includes(params.role)) return true;
@@ -307,6 +309,8 @@ export function withInAIAuth(
         envId: authObj.envId,
         orgId: authObj.orgId,
         orgRole: authObj.orgRole,
+        roles: authObj.roles,
+        permissions: authObj.permissions,
       });
       req.headers.set("x-inai-auth", authHeader);
     }

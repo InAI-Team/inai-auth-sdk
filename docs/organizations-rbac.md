@@ -60,9 +60,14 @@ JWT claims when an organization is active:
 
 ### Checking Permissions
 
-The `has()` function checks both global and org-scoped claims:
+You can access the user's roles and permissions directly as arrays, or use the `has()` helper for single checks:
 
 ```ts
+// Direct access to roles and permissions arrays
+auth.roles         // e.g. ["admin", "editor"]
+auth.permissions   // e.g. ["users:read", "content:write", "billing:manage"]
+
+// has() helper checks both global and org-scoped claims
 auth.has({ role: "admin" })          // true if "admin" is in the user's roles array
 auth.has({ permission: "users:read" }) // true if "users:read" is in the user's permissions array
 ```

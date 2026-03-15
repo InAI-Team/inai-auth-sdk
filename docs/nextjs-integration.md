@@ -198,7 +198,7 @@ Reads JWT claims from the `auth_token` cookie. The JWT signature was already ver
 import { auth } from "@inai-dev/nextjs/server";
 
 export default async function Page() {
-  const { userId, tenantId, orgId, has, protect, redirectToSignIn } = await auth();
+  const { userId, tenantId, orgId, roles, permissions, has, protect, redirectToSignIn } = await auth();
 
   // Option 1: Redirect if not signed in
   if (!userId) {
