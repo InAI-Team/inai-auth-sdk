@@ -43,7 +43,7 @@ function setAuthCookies(
     httpOnly: true,
     secure: isProduction,
     sameSite: "strict",
-    path: "/api/auth",
+    path: "/",
     maxAge: 7 * 24 * 60 * 60,
   });
 
@@ -66,7 +66,7 @@ function setAuthCookies(
 
 function clearAuthCookies(cookies: AstroCookies): void {
   cookies.delete(COOKIE_AUTH_TOKEN, { path: "/" });
-  cookies.delete(COOKIE_REFRESH_TOKEN, { path: "/api/auth" });
+  cookies.delete(COOKIE_REFRESH_TOKEN, { path: "/" });
   cookies.delete(COOKIE_AUTH_SESSION, { path: "/" });
 }
 

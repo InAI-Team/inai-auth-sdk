@@ -29,7 +29,7 @@ export function createPlatformAuthRoutes(config: InAIAuthConfig = {}) {
       httpOnly: true,
       secure: isProduction,
       sameSite: "strict",
-      path: "/api/auth",
+      path: "/",
       maxAge: 7 * 24 * 60 * 60,
     });
     if (user) {
@@ -53,7 +53,7 @@ export function createPlatformAuthRoutes(config: InAIAuthConfig = {}) {
   ) {
     cookieStore.set(COOKIE_AUTH_TOKEN, "", { path: "/", maxAge: 0 });
     cookieStore.set(COOKIE_REFRESH_TOKEN, "", {
-      path: "/api/auth",
+      path: "/",
       maxAge: 0,
     });
     cookieStore.set(COOKIE_AUTH_SESSION, "", { path: "/", maxAge: 0 });

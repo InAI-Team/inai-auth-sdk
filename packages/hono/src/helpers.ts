@@ -49,7 +49,7 @@ export function setAuthCookies(
     httpOnly: true,
     secure: isProduction,
     sameSite: "Strict",
-    path: "/api/auth",
+    path: "/",
     maxAge: 7 * 24 * 60 * 60,
   });
 
@@ -77,6 +77,6 @@ export function setAuthCookies(
 
 export function clearAuthCookies(c: Context): void {
   deleteCookie(c, COOKIE_AUTH_TOKEN, { path: "/" });
-  deleteCookie(c, COOKIE_REFRESH_TOKEN, { path: "/api/auth" });
+  deleteCookie(c, COOKIE_REFRESH_TOKEN, { path: "/" });
   deleteCookie(c, COOKIE_AUTH_SESSION, { path: "/" });
 }

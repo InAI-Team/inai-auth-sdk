@@ -52,7 +52,7 @@ export function setAuthCookies(
     httpOnly: true,
     secure: isProduction,
     sameSite: "strict",
-    path: "/api/auth",
+    path: "/",
     maxAge: 7 * 24 * 60 * 60,
   });
 
@@ -79,7 +79,7 @@ export function clearAuthCookies(
 ): void {
   const opts = { path: "/", maxAge: 0 };
   cookieStore.set(COOKIE_AUTH_TOKEN, "", opts);
-  cookieStore.set(COOKIE_REFRESH_TOKEN, "", { ...opts, path: "/api/auth" });
+  cookieStore.set(COOKIE_REFRESH_TOKEN, "", opts);
   cookieStore.set(COOKIE_AUTH_SESSION, "", opts);
 }
 

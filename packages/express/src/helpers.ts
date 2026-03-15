@@ -74,7 +74,7 @@ export function setAuthCookies(
     httpOnly: true,
     secure: isProduction,
     sameSite: "strict",
-    path: "/api/auth",
+    path: "/",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
   });
 
@@ -101,6 +101,6 @@ export function setAuthCookies(
 
 export function clearAuthCookies(res: Response): void {
   res.clearCookie(COOKIE_AUTH_TOKEN, { path: "/" });
-  res.clearCookie(COOKIE_REFRESH_TOKEN, { path: "/api/auth" });
+  res.clearCookie(COOKIE_REFRESH_TOKEN, { path: "/" });
   res.clearCookie(COOKIE_AUTH_SESSION, { path: "/" });
 }

@@ -11,7 +11,7 @@ export interface PlatformAPI {
     params: LoginParams,
   ): Promise<LoginResult & { user?: PlatformUserResource }>;
   platformRefresh(refreshToken: string): Promise<TokenPair>;
-  platformLogout(refreshToken: string): Promise<void>;
+  platformLogout(accessToken: string): Promise<void>;
   platformMfaChallenge(
     params: MFAChallengeParams,
   ): Promise<TokenPair & { user?: PlatformUserResource }>;

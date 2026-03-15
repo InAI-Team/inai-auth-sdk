@@ -163,7 +163,7 @@ async function runAuthCheck(
               });
               response.cookies.set(COOKIE_REFRESH_TOKEN, newTokens.refresh_token, {
                 httpOnly: true, secure: isProduction, sameSite: "strict",
-                path: "/api/auth", maxAge: 7 * 24 * 60 * 60,
+                path: "/", maxAge: 7 * 24 * 60 * 60,
               });
               response.cookies.set(COOKIE_AUTH_SESSION, JSON.stringify({
                 user: newUser,
@@ -206,7 +206,7 @@ async function runAuthCheck(
     );
     response.cookies.set(COOKIE_AUTH_TOKEN, "", { path: "/", maxAge: 0 });
     response.cookies.set(COOKIE_REFRESH_TOKEN, "", {
-      path: "/api/auth",
+      path: "/",
       maxAge: 0,
     });
     response.cookies.set(COOKIE_AUTH_SESSION, "", { path: "/", maxAge: 0 });
