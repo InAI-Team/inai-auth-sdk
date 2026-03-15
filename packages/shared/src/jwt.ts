@@ -3,10 +3,15 @@ import type { JWTClaims } from "@inai-dev/types";
 function base64urlDecode(str: string): Uint8Array {
   let padded = str.replace(/-/g, "+").replace(/_/g, "/");
   const remainder = padded.length % 4;
+  if (remainder === 1) throw new Error("Invalid base64url string");
   if (remainder === 2) padded += "==";
   else if (remainder === 3) padded += "=";
-  const binString = atob(padded);
-  return Uint8Array.from(binString, (ch) => ch.charCodeAt(0));
+  try {
+    const binString = atob(padded);
+    return Uint8Array.from(binString, (ch) => ch.charCodeAt(0));
+  } catch {
+    throw new Error("Invalid base64url encoding");
+  }
 }
 
 function base64urlToString(str: string): string {
@@ -76,8 +81,11 @@ export async function verifyES256(token: string, publicKey: CryptoKey): Promise<
     const payloadJson = new TextDecoder().decode(base64urlDecode(payloadB64));
     const payload = JSON.parse(payloadJson) as JWTClaims;
 
-    // Check expiration
-    if (payload.exp && Date.now() >= payload.exp * 1000) {
+    // Check expiration (required)
+    if (!payload.exp || typeof payload.exp !== "number") {
+      return null;
+    }
+    if (Date.now() >= payload.exp * 1000) {
       return null;
     }
 
