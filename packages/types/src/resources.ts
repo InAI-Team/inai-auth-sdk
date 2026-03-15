@@ -36,10 +36,12 @@ export interface PlatformUserResource {
 export interface SessionResource {
   id: string;
   userId: string;
-  tenantId: string;
-  environmentId: string | null;
-  activeOrgId: string | null;
+  userEmail: string | null;
+  userAgent: string | null;
+  ipAddress: string | null;
   expiresAt: string;
+  revokedAt: string | null;
+  createdAt: string;
 }
 
 export interface OrganizationResource {
@@ -48,7 +50,8 @@ export interface OrganizationResource {
   name: string;
   slug: string;
   imageUrl: string | null;
-  metadata: Record<string, unknown> | null;
+  metadata: unknown | null;
+  createdBy: string | null;
   createdAt: string;
   updatedAt: string;
 }

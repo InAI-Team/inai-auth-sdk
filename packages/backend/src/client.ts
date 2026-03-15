@@ -80,8 +80,8 @@ export class InAIAuthClient {
     });
   }
 
-  async mfaChallenge(params: MFAChallengeParams): Promise<TokenPair> {
-    return this.request<TokenPair>("/api/v1/auth/mfa/challenge", {
+  async mfaChallenge(params: MFAChallengeParams): Promise<TokenPair & { user?: UserResource }> {
+    return this.request<TokenPair & { user?: UserResource }>("/api/v1/auth/mfa/challenge", {
       method: "POST",
       body: JSON.stringify(params),
     });
@@ -143,6 +143,20 @@ export class InAIAuthClient {
   }
 
   // --- Platform Auth ---
+
+  async platformRegister(params: {
+    email: string;
+    password: string;
+    firstName?: string;
+    lastName?: string;
+    tenantName: string;
+    tenantSlug: string;
+  }): Promise<LoginResult & { user?: PlatformUserResource; tenant?: { id: string; name: string; slug: string } }> {
+    return this.request("/api/platform/auth/register", {
+      method: "POST",
+      body: JSON.stringify(params),
+    });
+  }
 
   async platformLogin(
     params: LoginParams,
@@ -238,6 +252,9 @@ export class InAIAuthClient {
       name: string;
       domain: string | null;
       homeUrl: string | null;
+      callbackUrls: string[] | null;
+      settings: Record<string, unknown> | null;
+      authConfig: Record<string, unknown> | null;
       isActive: boolean;
     }>,
   ): Promise<{ data: ApplicationResource }> {
@@ -248,6 +265,17 @@ export class InAIAuthClient {
         method: "PATCH",
         body: JSON.stringify(data),
       },
+    );
+  }
+
+  async deleteApplication(
+    accessToken: string,
+    appId: string,
+  ): Promise<void> {
+    await this.platformRequest(
+      `/api/platform/applications/${appId}`,
+      accessToken,
+      { method: "DELETE" },
     );
   }
 
