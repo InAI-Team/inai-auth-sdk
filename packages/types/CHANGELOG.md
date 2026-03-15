@@ -1,5 +1,11 @@
 # @inai-dev/types
 
+## 1.4.0
+
+### Minor Changes
+
+- Docu
+
 ## 1.3.0
 
 ### Minor Changes
