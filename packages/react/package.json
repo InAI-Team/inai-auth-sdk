@@ -1,6 +1,6 @@
 {
   "name": "@inai-dev/react",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "React components, hooks, and providers for InAI Auth",
   "type": "module",
   "main": "./dist/index.js",
@@ -24,8 +24,8 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@inai-dev/types": "^1.5.0",
-    "@inai-dev/shared": "^1.6.0"
+    "@inai-dev/types": "^1.7.0",
+    "@inai-dev/shared": "^1.7.0"
   },
   "peerDependencies": {
     "react": ">=18.0.0"

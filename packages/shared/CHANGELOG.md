@@ -1,5 +1,16 @@
 # @inai-dev/shared
 
+## 1.7.0
+
+### Minor Changes
+
+- Documents
+
+### Patch Changes
+
+- Updated dependencies
+  - @inai-dev/types@1.7.0
+
 ## 1.6.0
 
 ### Minor Changes

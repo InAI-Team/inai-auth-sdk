@@ -1,5 +1,19 @@
 # @inai-dev/nextjs
 
+## 1.7.0
+
+### Minor Changes
+
+- Documents
+
+### Patch Changes
+
+- Updated dependencies
+  - @inai-dev/backend@1.8.0
+  - @inai-dev/react@0.7.0
+  - @inai-dev/shared@1.7.0
+  - @inai-dev/types@1.7.0
+
 ## 1.6.0
 
 ### Minor Changes
