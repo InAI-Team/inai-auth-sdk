@@ -1,5 +1,17 @@
 # @inai-dev/react
 
+## 0.4.0
+
+### Minor Changes
+
+- Security
+
+### Patch Changes
+
+- Updated dependencies
+  - @inai-dev/shared@1.3.0
+  - @inai-dev/types@1.3.0
+
 ## 0.3.0
 
 ### Minor Changes
