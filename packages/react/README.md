@@ -27,7 +27,7 @@ function App({ children }) {
 ### `useAuth()`
 
 ```ts
-const { isLoaded, isSignedIn, userId, has, signOut, refreshSession } = useAuth();
+const { isLoaded, isSignedIn, userId, roles, permissions, has, signOut, refreshSession } = useAuth();
 
 has({ role: "admin" });       // check role
 has({ permission: "read" });  // check permission
@@ -45,7 +45,7 @@ const { isLoaded, isSignedIn, user } = useUser();
 ### `useSession()`
 
 ```ts
-const { isLoaded, isSignedIn, userId, tenantId, orgId, orgRole } = useSession();
+const { isLoaded, isSignedIn, userId, tenantId, orgId, orgRole, roles, permissions } = useSession();
 ```
 
 ### `useOrganization()`

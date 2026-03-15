@@ -73,7 +73,7 @@ export class InAIAuthClient {
     password: string;
     firstName?: string;
     lastName?: string;
-  }): Promise<LoginResult & { user?: UserResource }> {
+  }): Promise<LoginResult> {
     return this.request("/api/v1/auth/register", {
       method: "POST",
       body: JSON.stringify(params),
@@ -160,10 +160,9 @@ export class InAIAuthClient {
     });
   }
 
-  async platformLogout(refreshToken: string): Promise<void> {
-    await this.request("/api/platform/auth/logout", {
+  async platformLogout(accessToken: string): Promise<void> {
+    await this.platformRequest("/api/platform/auth/logout", accessToken, {
       method: "POST",
-      body: JSON.stringify({ refresh_token: refreshToken }),
     });
   }
 
@@ -206,7 +205,15 @@ export class InAIAuthClient {
 
   async createApplication(
     accessToken: string,
-    data: { name: string; slug: string; domain?: string; homeUrl?: string },
+    data: {
+      name: string;
+      slug: string;
+      domain?: string;
+      homeUrl?: string;
+      callbackUrls?: string[];
+      settings?: Record<string, unknown>;
+      authConfig?: Record<string, unknown>;
+    },
   ): Promise<{ data: ApplicationResource }> {
     return this.platformRequest("/api/platform/applications", accessToken, {
       method: "POST",

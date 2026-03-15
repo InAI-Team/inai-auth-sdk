@@ -12,6 +12,7 @@ export interface LoginResult {
   refresh_token?: string;
   token_type?: string;
   expires_in?: number;
+  user?: UserResource;
 }
 
 export interface MFAChallengeParams {
@@ -40,7 +41,9 @@ export interface SignUpResult {
 }
 
 export interface InAIAuthErrorBody {
-  code: string;
+  type: string;
+  title: string;
+  status: number;
   detail: string;
-  field?: string;
+  instance?: string;
 }

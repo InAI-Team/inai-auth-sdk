@@ -11,10 +11,12 @@ export class InAIAuthError extends Error {
     this.status = status;
     const parsed = body as Record<string, unknown> | null;
     this.body = {
-      code: (parsed?.code as string) ?? "UNKNOWN_ERROR",
+      type: (parsed?.type as string) ?? "UNKNOWN_ERROR",
+      title: (parsed?.title as string) ?? message,
+      status: status,
       detail: (parsed?.detail as string) ?? message,
-      field: (parsed?.field as string) ?? undefined,
+      instance: (parsed?.instance as string) ?? undefined,
     };
-    this.code = this.body.code;
+    this.code = this.body.type;
   }
 }

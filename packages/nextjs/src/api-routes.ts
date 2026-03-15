@@ -23,7 +23,7 @@ export function createAuthRoutes(config: InAIAuthConfig = {}) {
       const result = (await client.login({
         email: body.email,
         password: body.password,
-      })) as LoginResult & { user?: UserResource };
+      }));
 
       if (result.mfa_required) {
         return NextResponse.json({
@@ -32,10 +32,9 @@ export function createAuthRoutes(config: InAIAuthConfig = {}) {
         });
       }
 
-      const tokens = result as TokenPair;
-      const loginUser = (result as { user?: UserResource }).user;
+      const tokens = { access_token: result.access_token!, refresh_token: result.refresh_token!, token_type: result.token_type!, expires_in: result.expires_in! };
       const user =
-        loginUser ?? (await client.getMe(tokens.access_token)).data;
+        result.user as UserResource ?? (await client.getMe(tokens.access_token)).data;
       const cookieStore = await cookies();
       setAuthCookies(cookieStore, tokens, user);
 
@@ -111,10 +110,9 @@ export function createAuthRoutes(config: InAIAuthConfig = {}) {
         });
       }
 
-      const tokens = result as TokenPair;
-      const loginUser = result.user;
+      const tokens = { access_token: result.access_token!, refresh_token: result.refresh_token!, token_type: result.token_type!, expires_in: result.expires_in! };
       const user =
-        loginUser ?? (await client.getMe(tokens.access_token)).data;
+        result.user as UserResource ?? (await client.getMe(tokens.access_token)).data;
       const cookieStore = await cookies();
       setAuthCookies(cookieStore, tokens, user);
 

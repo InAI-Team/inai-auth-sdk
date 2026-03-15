@@ -61,12 +61,13 @@ export function setAuthCookies(
     ? new Date(claims.exp * 1000).toISOString()
     : new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
+  // Express res.cookie maxAge is in milliseconds
   res.cookie(COOKIE_AUTH_TOKEN, tokens.access_token, {
     httpOnly: true,
     secure: isProduction,
     sameSite: "lax",
     path: "/",
-    maxAge: tokens.expires_in * 1000,
+    maxAge: tokens.expires_in * 1000, // expires_in is in seconds, Express expects ms
   });
 
   res.cookie(COOKIE_REFRESH_TOKEN, tokens.refresh_token, {
@@ -74,7 +75,7 @@ export function setAuthCookies(
     secure: isProduction,
     sameSite: "strict",
     path: "/api/auth",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
   });
 
   res.cookie(
@@ -93,7 +94,7 @@ export function setAuthCookies(
       secure: isProduction,
       sameSite: "lax",
       path: "/",
-      maxAge: tokens.expires_in * 1000,
+      maxAge: tokens.expires_in * 1000, // expires_in is in seconds, Express expects ms
     },
   );
 }

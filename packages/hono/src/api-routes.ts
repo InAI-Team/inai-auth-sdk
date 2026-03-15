@@ -17,13 +17,13 @@ export function createAuthRoutes(config: InAIAuthConfig = {}) {
       const result = await client.login({
         email: body.email,
         password: body.password,
-      }) as LoginResult & { user?: UserResource };
+      });
 
       if (result.mfa_required) {
         return c.json({ mfa_required: true, mfa_token: result.mfa_token });
       }
 
-      const tokens = result as unknown as TokenPair;
+      const tokens = { access_token: result.access_token!, refresh_token: result.refresh_token!, token_type: result.token_type!, expires_in: result.expires_in! };
       const user =
         result.user ?? (await client.getMe(tokens.access_token)).data;
       setAuthCookies(c, tokens, user);
@@ -49,7 +49,7 @@ export function createAuthRoutes(config: InAIAuthConfig = {}) {
         return c.json({ needs_email_verification: true, user: result.user });
       }
 
-      const tokens = result as unknown as TokenPair;
+      const tokens = { access_token: result.access_token!, refresh_token: result.refresh_token!, token_type: result.token_type!, expires_in: result.expires_in! };
       const user =
         result.user ?? (await client.getMe(tokens.access_token)).data;
       setAuthCookies(c, tokens, user);

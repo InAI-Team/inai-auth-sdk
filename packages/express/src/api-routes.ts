@@ -1,6 +1,6 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
-import type { InAIAuthConfig, TokenPair, UserResource, LoginResult } from "@inai-dev/types";
+import type { InAIAuthConfig } from "@inai-dev/types";
 import { InAIAuthClient } from "@inai-dev/backend";
 import {
   setAuthCookies,
@@ -15,16 +15,14 @@ export function createAuthRoutes(config: InAIAuthConfig = {}): Router {
   router.post("/login", async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body as Record<string, string>;
-      const result = await client.login({ email, password }) as LoginResult & {
-        user?: UserResource;
-      };
+      const result = await client.login({ email, password });
 
       if (result.mfa_required) {
         res.json({ mfa_required: true, mfa_token: result.mfa_token });
         return;
       }
 
-      const tokens = result as unknown as TokenPair;
+      const tokens = { access_token: result.access_token!, refresh_token: result.refresh_token!, token_type: result.token_type!, expires_in: result.expires_in! };
       const user =
         result.user ?? (await client.getMe(tokens.access_token)).data;
       setAuthCookies(res, tokens, user);
@@ -54,7 +52,7 @@ export function createAuthRoutes(config: InAIAuthConfig = {}): Router {
         return;
       }
 
-      const tokens = result as unknown as TokenPair;
+      const tokens = { access_token: result.access_token!, refresh_token: result.refresh_token!, token_type: result.token_type!, expires_in: result.expires_in! };
       const user =
         result.user ?? (await client.getMe(tokens.access_token)).data;
       setAuthCookies(res, tokens, user);

@@ -1,5 +1,11 @@
 # @inai-dev/types
 
+## 1.5.0
+
+### Minor Changes
+
+- Session
+
 ## 1.4.0
 
 ### Minor Changes

@@ -74,7 +74,7 @@ export function createPlatformAuthRoutes(config: InAIAuthConfig = {}) {
         });
       }
 
-      const tokens = result as TokenPair;
+      const tokens = { access_token: result.access_token!, refresh_token: result.refresh_token!, token_type: result.token_type!, expires_in: result.expires_in! };
       const user = result.user;
       const cookieStore = await cookies();
       setPlatformCookies(cookieStore, tokens, user);
@@ -94,7 +94,7 @@ export function createPlatformAuthRoutes(config: InAIAuthConfig = {}) {
         code: body.code,
       });
 
-      const tokens = result as TokenPair;
+      const tokens = { access_token: result.access_token!, refresh_token: result.refresh_token!, token_type: result.token_type!, expires_in: result.expires_in! };
       const user = result.user;
       const cookieStore = await cookies();
       setPlatformCookies(cookieStore, tokens, user);
@@ -140,9 +140,9 @@ export function createPlatformAuthRoutes(config: InAIAuthConfig = {}) {
   async function handleLogout() {
     try {
       const cookieStore = await cookies();
-      const refreshToken = cookieStore.get(COOKIE_REFRESH_TOKEN)?.value;
-      if (refreshToken) {
-        await client.platformLogout(refreshToken).catch(() => {});
+      const accessToken = cookieStore.get(COOKIE_AUTH_TOKEN)?.value;
+      if (accessToken) {
+        await client.platformLogout(accessToken).catch(() => {});
       }
       clearPlatformCookies(cookieStore);
       return NextResponse.json({ success: true });

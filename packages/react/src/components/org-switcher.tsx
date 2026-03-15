@@ -38,7 +38,7 @@ export function OrganizationSwitcher() {
     await fetch("/api/auth/set-active-organization", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ organization_id: id }),
+      body: JSON.stringify({ organizationId: id }),
     });
     window.location.reload();
   }

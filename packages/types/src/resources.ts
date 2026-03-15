@@ -1,6 +1,6 @@
 export interface UserResource {
   id: string;
-  tenantId: string;
+  tenantId?: string;
   email: string;
   firstName: string | null;
   lastName: string | null;
@@ -8,8 +8,8 @@ export interface UserResource {
   isActive: boolean;
   emailVerified: boolean;
   mfaEnabled: boolean;
-  externalId: string | null;
-  roles: string[];
+  externalId?: string | null;
+  roles?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -22,6 +22,13 @@ export interface PlatformUserResource {
   lastName: string | null;
   avatarUrl: string | null;
   roles: string[];
+  permissions: string[];
+  tenant: {
+    id: string;
+    name: string;
+    slug: string;
+    plan: string;
+  } | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -54,6 +61,7 @@ export interface ApplicationResource {
   domain: string | null;
   logoUrl: string | null;
   homeUrl: string | null;
+  callbackUrls: string[] | null;
   isActive: boolean;
   settings: Record<string, unknown> | null;
   authConfig: Record<string, unknown> | null;

@@ -142,7 +142,7 @@ All hooks are imported from `@inai-dev/nextjs`.
 ### `useAuth()`
 
 ```ts
-const { isLoaded, isSignedIn, userId, has, signOut } = useAuth();
+const { isLoaded, isSignedIn, userId, roles, permissions, has, signOut } = useAuth();
 
 has({ role: "admin" });       // check role
 has({ permission: "read" });  // check permission
