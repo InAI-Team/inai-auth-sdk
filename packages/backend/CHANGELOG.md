@@ -1,5 +1,16 @@
 # @inai-dev/backend
 
+## 1.7.0
+
+### Minor Changes
+
+- docu
+
+### Patch Changes
+
+- Updated dependencies
+  - @inai-dev/types@1.6.0
+
 ## 1.6.0
 
 ### Minor Changes
