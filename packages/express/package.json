@@ -1,6 +1,6 @@
 {
   "name": "@inai-dev/express",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "Express integration for InAI Auth SDK",
   "type": "module",
   "main": "./dist/index.cjs",

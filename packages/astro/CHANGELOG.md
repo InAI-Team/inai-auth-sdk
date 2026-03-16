@@ -1,5 +1,11 @@
 # @inai-dev/astro
 
+## 0.9.0
+
+### Minor Changes
+
+- Session
+
 ## 0.8.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # @inai-dev/hono
 
+## 1.7.0
+
+### Minor Changes
+
+- Session
+
 ## 1.6.0
 
 ### Minor Changes

@@ -1,5 +1,16 @@
 # @inai-dev/nextjs
 
+## 1.9.0
+
+### Minor Changes
+
+- Session
+
+### Patch Changes
+
+- Updated dependencies
+  - @inai-dev/react@0.9.0
+
 ## 1.8.0
 
 ### Minor Changes
