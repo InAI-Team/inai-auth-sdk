@@ -1,5 +1,11 @@
 # @inai-dev/types
 
+## 1.8.0
+
+### Minor Changes
+
+- Refresh
+
 ## 1.7.0
 
 ### Minor Changes

@@ -1,5 +1,17 @@
 # @inai-dev/backend
 
+## 1.9.0
+
+### Minor Changes
+
+- Refresh
+
+### Patch Changes
+
+- Updated dependencies
+  - @inai-dev/shared@1.8.0
+  - @inai-dev/types@1.8.0
+
 ## 1.8.0
 
 ### Minor Changes

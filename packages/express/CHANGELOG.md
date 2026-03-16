@@ -1,5 +1,18 @@
 # @inai-dev/express
 
+## 1.6.0
+
+### Minor Changes
+
+- Refresh
+
+### Patch Changes
+
+- Updated dependencies
+  - @inai-dev/backend@1.9.0
+  - @inai-dev/shared@1.8.0
+  - @inai-dev/types@1.8.0
+
 ## 1.5.0
 
 ### Minor Changes
