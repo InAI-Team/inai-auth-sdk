@@ -5,6 +5,7 @@ import {
   setAuthCookies,
   clearAuthCookies,
   getRefreshTokenFromContext,
+  isSessionExpired,
 } from "./helpers";
 
 export function createAuthRoutes(config: InAIAuthConfig = {}) {
@@ -26,7 +27,7 @@ export function createAuthRoutes(config: InAIAuthConfig = {}) {
       const tokens = { access_token: result.access_token!, refresh_token: result.refresh_token!, token_type: result.token_type!, expires_in: result.expires_in! };
       const user =
         result.user ?? (await client.getMe(tokens.access_token)).data;
-      setAuthCookies(c, tokens, user);
+      setAuthCookies(c, tokens, user, { isNewSession: true });
 
       return c.json({ user });
     } catch (err) {
@@ -52,7 +53,7 @@ export function createAuthRoutes(config: InAIAuthConfig = {}) {
       const tokens = { access_token: result.access_token!, refresh_token: result.refresh_token!, token_type: result.token_type!, expires_in: result.expires_in! };
       const user =
         result.user ?? (await client.getMe(tokens.access_token)).data;
-      setAuthCookies(c, tokens, user);
+      setAuthCookies(c, tokens, user, { isNewSession: true });
 
       return c.json({ user });
     } catch (err) {
@@ -71,7 +72,7 @@ export function createAuthRoutes(config: InAIAuthConfig = {}) {
       });
 
       const { data: user } = await client.getMe(tokens.access_token);
-      setAuthCookies(c, tokens, user);
+      setAuthCookies(c, tokens, user, { isNewSession: true });
 
       return c.json({ user });
     } catch (err) {
@@ -83,6 +84,11 @@ export function createAuthRoutes(config: InAIAuthConfig = {}) {
 
   app.post("/refresh", async (c) => {
     try {
+      if (isSessionExpired(c)) {
+        clearAuthCookies(c);
+        return c.json({ error: "Session expired" }, 401);
+      }
+
       const refreshToken = getRefreshTokenFromContext(c);
 
       if (!refreshToken) {

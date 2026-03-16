@@ -5,6 +5,9 @@ import {
   COOKIE_AUTH_TOKEN,
   COOKIE_REFRESH_TOKEN,
   COOKIE_AUTH_SESSION,
+  COOKIE_SESSION_START,
+  SESSION_MAX_DURATION_S,
+  SESSION_MAX_DURATION_MS,
   decodeJWTPayload,
 } from "@inai-dev/shared";
 
@@ -29,6 +32,7 @@ export function setAuthCookies(
   c: Context,
   tokens: TokenPair,
   user: UserResource | PlatformUserResource,
+  options?: { isNewSession?: boolean },
 ): void {
   const isProduction =
     typeof process !== "undefined" && process.env?.NODE_ENV === "production";
@@ -73,10 +77,29 @@ export function setAuthCookies(
       maxAge: tokens.expires_in,
     },
   );
+
+  if (options?.isNewSession) {
+    setCookie(c, COOKIE_SESSION_START, String(Date.now()), {
+      httpOnly: false,
+      secure: isProduction,
+      sameSite: "Lax",
+      path: "/",
+      maxAge: SESSION_MAX_DURATION_S,
+    });
+  }
 }
 
 export function clearAuthCookies(c: Context): void {
   deleteCookie(c, COOKIE_AUTH_TOKEN, { path: "/" });
   deleteCookie(c, COOKIE_REFRESH_TOKEN, { path: "/" });
   deleteCookie(c, COOKIE_AUTH_SESSION, { path: "/" });
+  deleteCookie(c, COOKIE_SESSION_START, { path: "/" });
+}
+
+export function isSessionExpired(c: Context): boolean {
+  const raw = getCookie(c, COOKIE_SESSION_START);
+  if (!raw) return false;
+  const loginAt = Number(raw);
+  if (isNaN(loginAt)) return true;
+  return Date.now() - loginAt >= SESSION_MAX_DURATION_MS;
 }

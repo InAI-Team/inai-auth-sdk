@@ -3,6 +3,9 @@ import {
   COOKIE_AUTH_TOKEN,
   COOKIE_REFRESH_TOKEN,
   COOKIE_AUTH_SESSION,
+  COOKIE_SESSION_START,
+  SESSION_MAX_DURATION_S,
+  SESSION_MAX_DURATION_MS,
   decodeJWTPayload,
 } from "@inai-dev/shared";
 
@@ -10,6 +13,7 @@ export {
   COOKIE_AUTH_TOKEN,
   COOKIE_REFRESH_TOKEN,
   COOKIE_AUTH_SESSION,
+  COOKIE_SESSION_START,
 } from "@inai-dev/shared";
 
 export { isTokenExpired, getClaimsFromToken } from "@inai-dev/shared";
@@ -29,10 +33,15 @@ interface SessionData {
   envId?: string;
 }
 
+interface SetAuthCookiesOptions {
+  isNewSession?: boolean;
+}
+
 export function setAuthCookies(
   cookieStore: CookieStore,
   tokens: TokenPair,
   user: UserResource | PlatformUserResource,
+  options?: SetAuthCookiesOptions,
 ): void {
   const isProduction = process.env.NODE_ENV === "production";
   const claims = decodeJWTPayload(tokens.access_token);
@@ -72,6 +81,16 @@ export function setAuthCookies(
     path: "/",
     maxAge: tokens.expires_in,
   });
+
+  if (options?.isNewSession) {
+    cookieStore.set(COOKIE_SESSION_START, String(Date.now()), {
+      httpOnly: false,
+      secure: isProduction,
+      sameSite: "lax",
+      path: "/",
+      maxAge: SESSION_MAX_DURATION_S,
+    });
+  }
 }
 
 export function clearAuthCookies(
@@ -81,6 +100,15 @@ export function clearAuthCookies(
   cookieStore.set(COOKIE_AUTH_TOKEN, "", opts);
   cookieStore.set(COOKIE_REFRESH_TOKEN, "", opts);
   cookieStore.set(COOKIE_AUTH_SESSION, "", opts);
+  cookieStore.set(COOKIE_SESSION_START, "", opts);
+}
+
+export function isSessionExpired(cookieStore: CookieStore): boolean {
+  const raw = cookieStore.get(COOKIE_SESSION_START)?.value;
+  if (!raw) return false;
+  const loginAt = Number(raw);
+  if (isNaN(loginAt)) return true;
+  return Date.now() - loginAt >= SESSION_MAX_DURATION_MS;
 }
 
 export function getAuthTokenFromCookies(

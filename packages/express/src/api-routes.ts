@@ -6,6 +6,7 @@ import {
   setAuthCookies,
   clearAuthCookies,
   getRefreshTokenFromRequest,
+  isSessionExpired,
 } from "./helpers";
 
 export function createAuthRoutes(config: InAIAuthConfig = {}): Router {
@@ -25,7 +26,7 @@ export function createAuthRoutes(config: InAIAuthConfig = {}): Router {
       const tokens = { access_token: result.access_token!, refresh_token: result.refresh_token!, token_type: result.token_type!, expires_in: result.expires_in! };
       const user =
         result.user ?? (await client.getMe(tokens.access_token)).data;
-      setAuthCookies(res, tokens, user);
+      setAuthCookies(res, tokens, user, { isNewSession: true });
 
       res.json({ user });
     } catch (err) {
@@ -55,7 +56,7 @@ export function createAuthRoutes(config: InAIAuthConfig = {}): Router {
       const tokens = { access_token: result.access_token!, refresh_token: result.refresh_token!, token_type: result.token_type!, expires_in: result.expires_in! };
       const user =
         result.user ?? (await client.getMe(tokens.access_token)).data;
-      setAuthCookies(res, tokens, user);
+      setAuthCookies(res, tokens, user, { isNewSession: true });
 
       res.json({ user });
     } catch (err) {
@@ -71,7 +72,7 @@ export function createAuthRoutes(config: InAIAuthConfig = {}): Router {
       const tokens = await client.mfaChallenge({ mfa_token, code });
 
       const { data: user } = await client.getMe(tokens.access_token);
-      setAuthCookies(res, tokens, user);
+      setAuthCookies(res, tokens, user, { isNewSession: true });
 
       res.json({ user });
     } catch (err) {
@@ -83,6 +84,12 @@ export function createAuthRoutes(config: InAIAuthConfig = {}): Router {
 
   router.post("/refresh", async (req: Request, res: Response) => {
     try {
+      if (isSessionExpired(req)) {
+        clearAuthCookies(res);
+        res.status(401).json({ error: "Session expired" });
+        return;
+      }
+
       const refreshToken = getRefreshTokenFromRequest(req);
 
       if (!refreshToken) {

@@ -9,6 +9,7 @@ export { useSession } from "./hooks/use-session";
 export { useOrganization } from "./hooks/use-organization";
 export { useSignIn } from "./hooks/use-sign-in";
 export { useSignUp } from "./hooks/use-sign-up";
+export { useSessionTimeout } from "./hooks/use-session-timeout";
 
 // Components
 export { Protect } from "./components/protect";

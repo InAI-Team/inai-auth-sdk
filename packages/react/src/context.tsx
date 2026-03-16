@@ -6,10 +6,18 @@ import {
   useState,
   useEffect,
   useCallback,
+  useRef,
   type ReactNode,
 } from "react";
 import type { UserResource } from "@inai-dev/types";
-import { COOKIE_AUTH_SESSION } from "@inai-dev/shared";
+import {
+  COOKIE_AUTH_SESSION,
+  COOKIE_SESSION_START,
+  SESSION_MAX_DURATION_MS,
+  SESSION_WARNING_BEFORE_MS,
+  PROACTIVE_REFRESH_BEFORE_MS,
+  REFRESH_CHECK_INTERVAL_MS,
+} from "@inai-dev/shared";
 
 interface AuthState {
   isLoaded: boolean;
@@ -59,9 +67,21 @@ function parseSession(): SessionCookieData | null {
 
 interface InAIAuthProviderProps {
   children: ReactNode;
+  autoRefresh?: boolean;
+  sessionMaxDurationMs?: number;
+  sessionWarningBeforeMs?: number;
+  onSessionExpiring?: (secondsLeft: number) => void;
+  onSessionExpired?: () => void;
 }
 
-export function InAIAuthProvider({ children }: InAIAuthProviderProps) {
+export function InAIAuthProvider({
+  children,
+  autoRefresh = true,
+  sessionMaxDurationMs = SESSION_MAX_DURATION_MS,
+  sessionWarningBeforeMs = SESSION_WARNING_BEFORE_MS,
+  onSessionExpiring,
+  onSessionExpired,
+}: InAIAuthProviderProps) {
   const [state, setState] = useState<AuthState>({
     isLoaded: false,
     isSignedIn: false,
@@ -137,6 +157,65 @@ export function InAIAuthProvider({ children }: InAIAuthProviderProps) {
     await fetch("/api/auth/refresh", { method: "POST" });
     loadSession();
   }, [loadSession]);
+
+  // Auto-refresh & session timeout logic
+  const proactiveRefreshingRef = useRef(false);
+  const warningFiredRef = useRef(false);
+  const expiredFiredRef = useRef(false);
+
+  useEffect(() => {
+    if (!autoRefresh) return;
+    warningFiredRef.current = false;
+    expiredFiredRef.current = false;
+
+    const check = async () => {
+      if (!state.isSignedIn) return;
+
+      // Check access token expiry for proactive refresh
+      const session = parseSession();
+      if (session?.expiresAt) {
+        const expiresAt = typeof session.expiresAt === "string"
+          ? new Date(session.expiresAt).getTime()
+          : session.expiresAt;
+        const msLeftToken = expiresAt - Date.now();
+        if (msLeftToken <= PROACTIVE_REFRESH_BEFORE_MS && !proactiveRefreshingRef.current) {
+          proactiveRefreshingRef.current = true;
+          await fetch("/api/auth/refresh", { method: "POST" }).catch(() => {});
+          loadSession();
+          proactiveRefreshingRef.current = false;
+        }
+      }
+
+      // Check absolute session deadline
+      const sessionStartRaw = getCookie(COOKIE_SESSION_START);
+      if (sessionStartRaw) {
+        const loginAt = Number(sessionStartRaw);
+        if (!isNaN(loginAt)) {
+          const deadline = loginAt + sessionMaxDurationMs;
+          const msLeft = deadline - Date.now();
+
+          if (msLeft <= 0 && !expiredFiredRef.current) {
+            expiredFiredRef.current = true;
+            if (onSessionExpired) {
+              onSessionExpired();
+            } else {
+              await signOut();
+            }
+            return;
+          }
+
+          if (msLeft <= sessionWarningBeforeMs && onSessionExpiring && !warningFiredRef.current) {
+            warningFiredRef.current = true;
+            onSessionExpiring(Math.floor(msLeft / 1000));
+          }
+        }
+      }
+    };
+
+    check();
+    const interval = setInterval(check, REFRESH_CHECK_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [autoRefresh, state.isSignedIn, sessionMaxDurationMs, sessionWarningBeforeMs, onSessionExpiring, onSessionExpired, signOut, loadSession]);
 
   return (
     <InAIAuthContext.Provider

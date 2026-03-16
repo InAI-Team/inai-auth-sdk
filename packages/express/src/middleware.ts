@@ -8,6 +8,7 @@ import {
   getRefreshTokenFromRequest,
   setAuthCookies,
   clearAuthCookies,
+  isSessionExpired,
 } from "./helpers";
 
 function matchesRoute(pathname: string, patterns: string[]): boolean {
@@ -74,6 +75,13 @@ export function inaiAuthMiddleware(
     const token = getTokenFromRequest(req);
 
     if (!token || isTokenExpired(token)) {
+      // Check absolute session max before attempting refresh
+      if (isSessionExpired(req)) {
+        clearAuthCookies(res);
+        handleUnauthorized(req, res, next);
+        return;
+      }
+
       const refreshToken = getRefreshTokenFromRequest(req);
 
       if (refreshToken) {

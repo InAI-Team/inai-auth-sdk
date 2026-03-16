@@ -4,6 +4,9 @@ import {
   COOKIE_AUTH_TOKEN,
   COOKIE_REFRESH_TOKEN,
   COOKIE_AUTH_SESSION,
+  COOKIE_SESSION_START,
+  SESSION_MAX_DURATION_S,
+  SESSION_MAX_DURATION_MS,
   decodeJWTPayload,
 } from "@inai-dev/shared";
 
@@ -24,6 +27,7 @@ function setAuthCookies(
   cookies: AstroCookies,
   tokens: TokenPair,
   user: UserResource,
+  options?: { isNewSession?: boolean },
 ): void {
   const isProduction = typeof process !== "undefined" && process.env?.NODE_ENV === "production";
   const claims = decodeJWTPayload(tokens.access_token);
@@ -62,12 +66,31 @@ function setAuthCookies(
     path: "/",
     maxAge: tokens.expires_in,
   });
+
+  if (options?.isNewSession) {
+    cookies.set(COOKIE_SESSION_START, String(Date.now()), {
+      httpOnly: false,
+      secure: isProduction,
+      sameSite: "lax",
+      path: "/",
+      maxAge: SESSION_MAX_DURATION_S,
+    });
+  }
 }
 
 function clearAuthCookies(cookies: AstroCookies): void {
   cookies.delete(COOKIE_AUTH_TOKEN, { path: "/" });
   cookies.delete(COOKIE_REFRESH_TOKEN, { path: "/" });
   cookies.delete(COOKIE_AUTH_SESSION, { path: "/" });
+  cookies.delete(COOKIE_SESSION_START, { path: "/" });
+}
+
+function isSessionExpired(cookies: AstroCookies): boolean {
+  const raw = cookies.get(COOKIE_SESSION_START)?.value;
+  if (!raw) return false;
+  const loginAt = Number(raw);
+  if (isNaN(loginAt)) return true;
+  return Date.now() - loginAt >= SESSION_MAX_DURATION_MS;
 }
 
 function jsonResponse(data: unknown, status = 200): Response {
@@ -98,7 +121,7 @@ export function createAuthRoutes(config: InAIAuthConfig = {}) {
       const tokens = { access_token: result.access_token!, refresh_token: result.refresh_token!, token_type: result.token_type!, expires_in: result.expires_in! };
       const loginUser = result.user;
       const user = loginUser ?? (await client.getMe(tokens.access_token)).data;
-      setAuthCookies(context.cookies, tokens, user);
+      setAuthCookies(context.cookies, tokens, user, { isNewSession: true });
 
       return jsonResponse({ user });
     } catch (err) {
@@ -127,7 +150,7 @@ export function createAuthRoutes(config: InAIAuthConfig = {}) {
       const tokens = { access_token: result.access_token!, refresh_token: result.refresh_token!, token_type: result.token_type!, expires_in: result.expires_in! };
       const loginUser = result.user;
       const user = loginUser ?? (await client.getMe(tokens.access_token)).data;
-      setAuthCookies(context.cookies, tokens, user);
+      setAuthCookies(context.cookies, tokens, user, { isNewSession: true });
 
       return jsonResponse({ user });
     } catch (err) {
@@ -145,7 +168,7 @@ export function createAuthRoutes(config: InAIAuthConfig = {}) {
       });
 
       const { data: user } = await client.getMe(tokens.access_token);
-      setAuthCookies(context.cookies, tokens, user);
+      setAuthCookies(context.cookies, tokens, user, { isNewSession: true });
 
       return jsonResponse({ user });
     } catch (err) {
@@ -156,6 +179,11 @@ export function createAuthRoutes(config: InAIAuthConfig = {}) {
 
   async function handleRefresh(context: AstroAPIContext): Promise<Response> {
     try {
+      if (isSessionExpired(context.cookies)) {
+        clearAuthCookies(context.cookies);
+        return jsonResponse({ error: "Session expired" }, 401);
+      }
+
       const refreshToken = context.cookies.get(COOKIE_REFRESH_TOKEN)?.value;
 
       if (!refreshToken) {

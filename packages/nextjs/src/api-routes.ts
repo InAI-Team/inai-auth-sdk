@@ -12,6 +12,7 @@ import {
   setAuthCookies,
   clearAuthCookies,
   getRefreshTokenFromCookies,
+  isSessionExpired,
 } from "./cookies";
 
 export function createAuthRoutes(config: InAIAuthConfig = {}) {
@@ -36,7 +37,7 @@ export function createAuthRoutes(config: InAIAuthConfig = {}) {
       const user =
         result.user as UserResource ?? (await client.getMe(tokens.access_token)).data;
       const cookieStore = await cookies();
-      setAuthCookies(cookieStore, tokens, user);
+      setAuthCookies(cookieStore, tokens, user, { isNewSession: true });
 
       return NextResponse.json({ user });
     } catch (err) {
@@ -55,7 +56,7 @@ export function createAuthRoutes(config: InAIAuthConfig = {}) {
 
       const { data: user } = await client.getMe(tokens.access_token);
       const cookieStore = await cookies();
-      setAuthCookies(cookieStore, tokens, user);
+      setAuthCookies(cookieStore, tokens, user, { isNewSession: true });
 
       return NextResponse.json({ user });
     } catch (err) {
@@ -68,6 +69,15 @@ export function createAuthRoutes(config: InAIAuthConfig = {}) {
   async function handleRefresh() {
     try {
       const cookieStore = await cookies();
+
+      if (isSessionExpired(cookieStore)) {
+        clearAuthCookies(cookieStore);
+        return NextResponse.json(
+          { error: "Session expired" },
+          { status: 401 },
+        );
+      }
+
       const refreshToken = getRefreshTokenFromCookies(cookieStore);
 
       if (!refreshToken) {
@@ -114,7 +124,7 @@ export function createAuthRoutes(config: InAIAuthConfig = {}) {
       const user =
         result.user as UserResource ?? (await client.getMe(tokens.access_token)).data;
       const cookieStore = await cookies();
-      setAuthCookies(cookieStore, tokens, user);
+      setAuthCookies(cookieStore, tokens, user, { isNewSession: true });
 
       return NextResponse.json({ user });
     } catch (err) {

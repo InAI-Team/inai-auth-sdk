@@ -5,12 +5,14 @@ import {
   COOKIE_AUTH_TOKEN,
   COOKIE_AUTH_SESSION,
   COOKIE_REFRESH_TOKEN,
+  COOKIE_SESSION_START,
+  SESSION_MAX_DURATION_MS,
   DEFAULT_API_URL,
   decodeJWTHeader,
   verifyES256,
   JWKSClient,
+  isTokenExpired,
 } from "@inai-dev/shared";
-import { isTokenExpired } from "@inai-dev/shared";
 
 export interface InAIMiddlewareConfig {
   authMode?: "app" | "platform";
@@ -134,6 +136,22 @@ async function runAuthCheck(
   const token = req.cookies.get(COOKIE_AUTH_TOKEN)?.value;
 
   if (!token || isTokenExpired(token)) {
+    // Check absolute session max before attempting refresh
+    const sessionStart = req.cookies.get(COOKIE_SESSION_START)?.value;
+    if (sessionStart) {
+      const loginAt = Number(sessionStart);
+      if (!isNaN(loginAt) && Date.now() - loginAt >= SESSION_MAX_DURATION_MS) {
+        const response = NextResponse.redirect(
+          new URL(`${signInUrl}?returnTo=${encodeURIComponent(pathname)}`, req.url),
+        );
+        response.cookies.set(COOKIE_AUTH_TOKEN, "", { path: "/", maxAge: 0 });
+        response.cookies.set(COOKIE_REFRESH_TOKEN, "", { path: "/", maxAge: 0 });
+        response.cookies.set(COOKIE_AUTH_SESSION, "", { path: "/", maxAge: 0 });
+        response.cookies.set(COOKIE_SESSION_START, "", { path: "/", maxAge: 0 });
+        return { authObj: null, response };
+      }
+    }
+
     const refreshToken = req.cookies.get(COOKIE_REFRESH_TOKEN)?.value;
     if (refreshToken) {
       try {
@@ -210,6 +228,7 @@ async function runAuthCheck(
       maxAge: 0,
     });
     response.cookies.set(COOKIE_AUTH_SESSION, "", { path: "/", maxAge: 0 });
+    response.cookies.set(COOKIE_SESSION_START, "", { path: "/", maxAge: 0 });
     return { authObj: null, response };
   }
 

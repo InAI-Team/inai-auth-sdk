@@ -5,6 +5,7 @@ export {
   getAuth,
   setAuthCookies,
   clearAuthCookies,
+  isSessionExpired,
   getTokenFromRequest,
   getRefreshTokenFromRequest,
 } from "./helpers";

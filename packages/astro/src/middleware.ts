@@ -2,7 +2,10 @@ import type { MiddlewareHandler } from "astro";
 import type { AuthObject } from "@inai-dev/types";
 import {
   COOKIE_AUTH_TOKEN,
+  COOKIE_AUTH_SESSION,
   COOKIE_REFRESH_TOKEN,
+  COOKIE_SESSION_START,
+  SESSION_MAX_DURATION_MS,
   decodeJWTHeader,
   verifyES256,
   isTokenExpired,
@@ -47,6 +50,21 @@ export function inaiAstroMiddleware(
     let token = context.cookies.get(COOKIE_AUTH_TOKEN)?.value;
 
     if (!token || isTokenExpired(token)) {
+      // Check absolute session max before attempting refresh
+      const sessionStartRaw = context.cookies.get(COOKIE_SESSION_START)?.value;
+      if (sessionStartRaw) {
+        const loginAt = Number(sessionStartRaw);
+        if (!isNaN(loginAt) && Date.now() - loginAt >= SESSION_MAX_DURATION_MS) {
+          context.cookies.delete(COOKIE_AUTH_TOKEN, { path: "/" });
+          context.cookies.delete(COOKIE_REFRESH_TOKEN, { path: "/" });
+          context.cookies.delete(COOKIE_AUTH_SESSION, { path: "/" });
+          context.cookies.delete(COOKIE_SESSION_START, { path: "/" });
+          return context.redirect(
+            `${signInUrl}?returnTo=${encodeURIComponent(pathname)}`,
+          );
+        }
+      }
+
       const refreshToken = context.cookies.get(COOKIE_REFRESH_TOKEN)?.value;
       if (refreshToken) {
         try {

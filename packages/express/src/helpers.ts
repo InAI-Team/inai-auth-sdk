@@ -4,6 +4,9 @@ import {
   COOKIE_AUTH_TOKEN,
   COOKIE_REFRESH_TOKEN,
   COOKIE_AUTH_SESSION,
+  COOKIE_SESSION_START,
+  SESSION_MAX_DURATION_S,
+  SESSION_MAX_DURATION_MS,
   decodeJWTPayload,
 } from "@inai-dev/shared";
 
@@ -53,6 +56,7 @@ export function setAuthCookies(
   res: Response,
   tokens: TokenPair,
   user: UserResource | PlatformUserResource,
+  options?: { isNewSession?: boolean },
 ): void {
   const isProduction =
     typeof process !== "undefined" && process.env?.NODE_ENV === "production";
@@ -97,10 +101,30 @@ export function setAuthCookies(
       maxAge: tokens.expires_in * 1000, // expires_in is in seconds, Express expects ms
     },
   );
+
+  if (options?.isNewSession) {
+    res.cookie(COOKIE_SESSION_START, String(Date.now()), {
+      httpOnly: false,
+      secure: isProduction,
+      sameSite: "lax",
+      path: "/",
+      maxAge: SESSION_MAX_DURATION_S * 1000, // Express expects ms
+    });
+  }
 }
 
 export function clearAuthCookies(res: Response): void {
   res.clearCookie(COOKIE_AUTH_TOKEN, { path: "/" });
   res.clearCookie(COOKIE_REFRESH_TOKEN, { path: "/" });
   res.clearCookie(COOKIE_AUTH_SESSION, { path: "/" });
+  res.clearCookie(COOKIE_SESSION_START, { path: "/" });
+}
+
+export function isSessionExpired(req: Request): boolean {
+  const raw = req.cookies?.[COOKIE_SESSION_START]
+    ?? parseCookiesFromHeader(req.headers.cookie)[COOKIE_SESSION_START];
+  if (!raw) return false;
+  const loginAt = Number(raw);
+  if (isNaN(loginAt)) return true;
+  return Date.now() - loginAt >= SESSION_MAX_DURATION_MS;
 }

@@ -21,6 +21,12 @@ export {
   HEADER_INAI_AUTH,
   DEFAULT_API_URL,
   DEFAULT_JWKS_URL,
+  COOKIE_SESSION_START,
+  SESSION_MAX_DURATION_S,
+  SESSION_MAX_DURATION_MS,
+  SESSION_WARNING_BEFORE_MS,
+  PROACTIVE_REFRESH_BEFORE_MS,
+  REFRESH_CHECK_INTERVAL_MS,
 } from "./constants";
 export { normalizeApiUrl, buildEndpoint } from "./url";
 export { isValidEmail, isStrongPassword } from "./validators";

@@ -4,6 +4,7 @@ export {
   useAuth,
   useUser,
   useSession,
+  useSessionTimeout,
   useOrganization,
   useSignIn,
   useSignUp,

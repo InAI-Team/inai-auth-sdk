@@ -7,7 +7,10 @@ import {
   COOKIE_AUTH_TOKEN,
   COOKIE_AUTH_SESSION,
   COOKIE_REFRESH_TOKEN,
+  COOKIE_SESSION_START,
+  SESSION_MAX_DURATION_S,
 } from "@inai-dev/shared";
+import { isSessionExpired } from "./cookies";
 
 export function createPlatformAuthRoutes(config: InAIAuthConfig = {}) {
   const client = new InAIAuthClient(config);
@@ -17,6 +20,7 @@ export function createPlatformAuthRoutes(config: InAIAuthConfig = {}) {
     cookieStore: Awaited<ReturnType<typeof cookies>>,
     tokens: TokenPair,
     user?: PlatformUserResource,
+    options?: { isNewSession?: boolean },
   ) {
     cookieStore.set(COOKIE_AUTH_TOKEN, tokens.access_token, {
       httpOnly: true,
@@ -46,6 +50,15 @@ export function createPlatformAuthRoutes(config: InAIAuthConfig = {}) {
         },
       );
     }
+    if (options?.isNewSession) {
+      cookieStore.set(COOKIE_SESSION_START, String(Date.now()), {
+        httpOnly: false,
+        secure: isProduction,
+        sameSite: "lax",
+        path: "/",
+        maxAge: SESSION_MAX_DURATION_S,
+      });
+    }
   }
 
   function clearPlatformCookies(
@@ -57,6 +70,7 @@ export function createPlatformAuthRoutes(config: InAIAuthConfig = {}) {
       maxAge: 0,
     });
     cookieStore.set(COOKIE_AUTH_SESSION, "", { path: "/", maxAge: 0 });
+    cookieStore.set(COOKIE_SESSION_START, "", { path: "/", maxAge: 0 });
   }
 
   async function handleLogin(req: NextRequest) {
@@ -77,7 +91,7 @@ export function createPlatformAuthRoutes(config: InAIAuthConfig = {}) {
       const tokens = { access_token: result.access_token!, refresh_token: result.refresh_token!, token_type: result.token_type!, expires_in: result.expires_in! };
       const user = result.user;
       const cookieStore = await cookies();
-      setPlatformCookies(cookieStore, tokens, user);
+      setPlatformCookies(cookieStore, tokens, user, { isNewSession: true });
 
       return NextResponse.json({ user });
     } catch (err) {
@@ -97,7 +111,7 @@ export function createPlatformAuthRoutes(config: InAIAuthConfig = {}) {
       const tokens = { access_token: result.access_token!, refresh_token: result.refresh_token!, token_type: result.token_type!, expires_in: result.expires_in! };
       const user = result.user;
       const cookieStore = await cookies();
-      setPlatformCookies(cookieStore, tokens, user);
+      setPlatformCookies(cookieStore, tokens, user, { isNewSession: true });
 
       return NextResponse.json({ user });
     } catch (err) {
@@ -110,6 +124,16 @@ export function createPlatformAuthRoutes(config: InAIAuthConfig = {}) {
   async function handleRefresh() {
     try {
       const cookieStore = await cookies();
+
+      // Check absolute session max
+      if (isSessionExpired(cookieStore)) {
+        clearPlatformCookies(cookieStore);
+        return NextResponse.json(
+          { error: "Session expired" },
+          { status: 401 },
+        );
+      }
+
       const refreshToken = cookieStore.get(COOKIE_REFRESH_TOKEN)?.value;
 
       if (!refreshToken) {

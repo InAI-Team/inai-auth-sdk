@@ -8,6 +8,7 @@ import {
   getRefreshTokenFromContext,
   setAuthCookies,
   clearAuthCookies,
+  isSessionExpired,
   getAuth,
 } from "./helpers";
 
@@ -62,6 +63,12 @@ export function inaiAuthMiddleware(
     const token = getTokenFromContext(c);
 
     if (!token || isTokenExpired(token)) {
+      // Check absolute session max before attempting refresh
+      if (isSessionExpired(c)) {
+        clearAuthCookies(c);
+        return handleUnauthorized(c);
+      }
+
       const refreshToken = getRefreshTokenFromContext(c);
 
       if (refreshToken) {

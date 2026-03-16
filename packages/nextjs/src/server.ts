@@ -18,7 +18,7 @@ import { getAuthConfig } from "./config";
 export { createAuthRoutes } from "./api-routes";
 export { createPlatformAuthRoutes } from "./platform-api-routes";
 export { configureAuth, getAuthConfig } from "./config";
-export { setAuthCookies, clearAuthCookies, getRefreshTokenFromCookies, getAuthTokenFromCookies } from "./cookies";
+export { setAuthCookies, clearAuthCookies, isSessionExpired, getRefreshTokenFromCookies, getAuthTokenFromCookies } from "./cookies";
 
 export async function auth(): Promise<ServerAuthObject> {
   const cookieStore = await cookies();
