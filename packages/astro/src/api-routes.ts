@@ -32,8 +32,8 @@ function setAuthCookies(
   const isProduction = typeof process !== "undefined" && process.env?.NODE_ENV === "production";
   const claims = decodeJWTPayload(tokens.access_token);
   const expiresAt = claims
-    ? new Date(claims.exp * 1000).toISOString()
-    : new Date(Date.now() + tokens.expires_in * 1000).toISOString();
+    ? claims.exp * 1000
+    : Date.now() + tokens.expires_in * 1000;
 
   cookies.set(COOKIE_AUTH_TOKEN, tokens.access_token, {
     httpOnly: true,
@@ -64,7 +64,7 @@ function setAuthCookies(
     secure: isProduction,
     sameSite: "lax",
     path: "/",
-    maxAge: tokens.expires_in,
+    maxAge: 7 * 24 * 60 * 60,
   });
 
   if (options?.isNewSession) {

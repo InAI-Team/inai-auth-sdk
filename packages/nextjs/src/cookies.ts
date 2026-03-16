@@ -25,7 +25,7 @@ interface CookieStore {
 
 interface SessionData {
   user: UserResource | PlatformUserResource;
-  expiresAt: string;
+  expiresAt: number;
   permissions?: string[];
   orgId?: string;
   orgRole?: string;
@@ -46,8 +46,8 @@ export function setAuthCookies(
   const isProduction = process.env.NODE_ENV === "production";
   const claims = decodeJWTPayload(tokens.access_token);
   const expiresAt = claims
-    ? new Date(claims.exp * 1000).toISOString()
-    : new Date(Date.now() + tokens.expires_in * 1000).toISOString();
+    ? claims.exp * 1000
+    : Date.now() + tokens.expires_in * 1000;
 
   cookieStore.set(COOKIE_AUTH_TOKEN, tokens.access_token, {
     httpOnly: true,
@@ -79,7 +79,7 @@ export function setAuthCookies(
     secure: isProduction,
     sameSite: "lax",
     path: "/",
-    maxAge: tokens.expires_in,
+    maxAge: 7 * 24 * 60 * 60,
   });
 
   if (options?.isNewSession) {

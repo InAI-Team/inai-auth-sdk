@@ -46,7 +46,7 @@ export function createPlatformAuthRoutes(config: InAIAuthConfig = {}) {
           secure: isProduction,
           sameSite: "lax",
           path: "/",
-          maxAge: tokens.expires_in,
+          maxAge: 7 * 24 * 60 * 60,
         },
       );
     }

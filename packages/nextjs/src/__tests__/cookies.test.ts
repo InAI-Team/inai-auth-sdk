@@ -158,7 +158,7 @@ describe("getRefreshTokenFromCookies", () => {
 describe("getSessionFromCookies", () => {
   it("parses session data from cookie", () => {
     const cookieStore = createMockCookieStore();
-    const sessionData = { user: mockUser, expiresAt: "2024-12-31T00:00:00Z" };
+    const sessionData = { user: mockUser, expiresAt: 1735603200000 };
     cookieStore.set("auth_session", JSON.stringify(sessionData));
 
     const result = getSessionFromCookies(cookieStore as any);

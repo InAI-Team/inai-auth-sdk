@@ -47,7 +47,7 @@ function getCookie(name: string): string | undefined {
 
 interface SessionCookieData {
   user: UserResource & { tenantId?: string };
-  expiresAt: string;
+  expiresAt: number | string;
   permissions?: string[];
   orgId?: string;
   orgRole?: string;
@@ -171,8 +171,19 @@ export function InAIAuthProvider({
     const check = async () => {
       if (!state.isSignedIn) return;
 
-      // Check access token expiry for proactive refresh
+      // Fallback: auth_session cookie expired but session is still active → force refresh
       const session = parseSession();
+      if (!session && getCookie(COOKIE_SESSION_START)) {
+        if (!proactiveRefreshingRef.current) {
+          proactiveRefreshingRef.current = true;
+          await fetch("/api/auth/refresh", { method: "POST" }).catch(() => {});
+          loadSession();
+          proactiveRefreshingRef.current = false;
+        }
+        return;
+      }
+
+      // Check access token expiry for proactive refresh
       if (session?.expiresAt) {
         const expiresAt = typeof session.expiresAt === "string"
           ? new Date(session.expiresAt).getTime()

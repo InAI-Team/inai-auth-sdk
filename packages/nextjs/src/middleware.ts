@@ -185,10 +185,10 @@ async function runAuthCheck(
               });
               response.cookies.set(COOKIE_AUTH_SESSION, JSON.stringify({
                 user: newUser,
-                expiresAt: new Date(Date.now() + newTokens.expires_in * 1000).toISOString(),
+                expiresAt: Date.now() + newTokens.expires_in * 1000,
               }), {
                 httpOnly: false, secure: isProduction, sameSite: "lax",
-                path: "/", maxAge: newTokens.expires_in,
+                path: "/", maxAge: 7 * 24 * 60 * 60,
               });
               return { authObj: null, response };
             }

@@ -38,8 +38,8 @@ export function setAuthCookies(
     typeof process !== "undefined" && process.env?.NODE_ENV === "production";
   const claims = decodeJWTPayload(tokens.access_token);
   const expiresAt = claims
-    ? new Date(claims.exp * 1000).toISOString()
-    : new Date(Date.now() + tokens.expires_in * 1000).toISOString();
+    ? claims.exp * 1000
+    : Date.now() + tokens.expires_in * 1000;
 
   setCookie(c, COOKIE_AUTH_TOKEN, tokens.access_token, {
     httpOnly: true,
@@ -74,7 +74,7 @@ export function setAuthCookies(
       secure: isProduction,
       sameSite: "Lax",
       path: "/",
-      maxAge: tokens.expires_in,
+      maxAge: 7 * 24 * 60 * 60,
     },
   );
 
