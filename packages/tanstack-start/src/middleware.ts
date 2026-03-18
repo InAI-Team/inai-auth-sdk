@@ -15,6 +15,8 @@ import {
 } from "@inai-dev/shared";
 import type { InAITanStackMiddlewareConfig, RequireAuthConfig } from "./types";
 
+export type { InAITanStackMiddlewareConfig, RequireAuthConfig } from "./types";
+
 // Module-level JWKS client singleton (shared across requests in the same process)
 let sharedJwksClient: JWKSClient | null = null;
 let sharedJwksUrl: string | null = null;
@@ -225,9 +227,9 @@ async function refreshTokens(
  *   signInUrl: "/login",
  * })
  *
- * export default createStart({
+ * export default createStart(() => ({
  *   requestMiddleware: [authMiddleware],
- * })
+ * }))
  * ```
  */
 export function createInAIAuthMiddleware(
