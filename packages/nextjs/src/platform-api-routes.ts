@@ -177,6 +177,51 @@ export function createPlatformAuthRoutes(config: InAIAuthConfig = {}) {
     }
   }
 
+  async function handleGetMe() {
+    try {
+      const cookieStore = await cookies();
+      const accessToken = cookieStore.get(COOKIE_AUTH_TOKEN)?.value;
+      if (!accessToken) {
+        return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+      }
+      const result = await client.platformGetMe(accessToken);
+      return NextResponse.json(result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to get user";
+      return NextResponse.json({ error: message }, { status: 401 });
+    }
+  }
+
+  async function handleRegister(req: NextRequest) {
+    try {
+      const body = (await req.json()) as Record<string, string>;
+      const result = await client.platformRegister({
+        email: body.email,
+        password: body.password,
+        firstName: body.firstName,
+        lastName: body.lastName,
+        tenantName: body.tenantName,
+        tenantSlug: body.tenantSlug,
+      });
+
+      if (result.access_token && result.refresh_token) {
+        const tokens = {
+          access_token: result.access_token,
+          refresh_token: result.refresh_token,
+          token_type: result.token_type!,
+          expires_in: result.expires_in!,
+        };
+        const cookieStore = await cookies();
+        setPlatformCookies(cookieStore, tokens, result.user, { isNewSession: true });
+      }
+
+      return NextResponse.json({ user: result.user, tenant: result.tenant });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Registration failed";
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
+  }
+
   async function handler(
     req: NextRequest,
     context: { params: Promise<{ inai: string[] }> },
@@ -188,12 +233,21 @@ export function createPlatformAuthRoutes(config: InAIAuthConfig = {}) {
       switch (path) {
         case "login":
           return handleLogin(req);
+        case "register":
+          return handleRegister(req);
         case "mfa-challenge":
           return handleMFAChallenge(req);
         case "refresh":
           return handleRefresh();
         case "logout":
           return handleLogout();
+      }
+    }
+
+    if (req.method === "GET") {
+      switch (path) {
+        case "me":
+          return handleGetMe();
       }
     }
 

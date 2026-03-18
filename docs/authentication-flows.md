@@ -334,3 +334,40 @@ const { GET, POST } = createPlatformAuthRoutes();
 
 export { GET, POST };
 ```
+
+### Platform Registration
+
+Platform registration creates both a new platform user and a new tenant:
+
+```ts
+const res = await fetch("/api/auth/register", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    email: "admin@company.com",
+    password: "securePassword",
+    firstName: "Jane",
+    lastName: "Doe",
+    tenantName: "My Company",
+    tenantSlug: "my-company",
+  }),
+});
+const { user, tenant } = await res.json();
+```
+
+### Platform Routes Summary
+
+All frameworks (Next.js, Hono, Express, Astro) expose these platform routes via `createPlatformAuthRoutes()`:
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/login` | Platform user login |
+| POST | `/register` | Platform user + tenant registration |
+| POST | `/mfa-challenge` | MFA verification |
+| POST | `/refresh` | Token refresh |
+| POST | `/logout` | Logout |
+| GET | `/me` | Get current platform user |
+
+### Session Lifetime
+
+Sessions have a maximum absolute duration of **7 days** from the initial login. This is not a sliding window — the `inai_session_start` cookie is only set during login, not on refresh. The refresh token can extend the access token within this 7-day window, but after 7 days the user must log in again.

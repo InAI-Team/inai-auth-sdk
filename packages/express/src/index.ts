@@ -11,6 +11,7 @@ export {
 } from "./helpers";
 
 export { createAuthRoutes } from "./api-routes";
+export { createPlatformAuthRoutes } from "./platform-api-routes";
 
 export type {
   AuthObject,

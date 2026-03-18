@@ -59,6 +59,9 @@ The SDK reads `INAI_PUBLISHABLE_KEY` from `process.env` automatically. This crea
 - `POST /api/auth/mfa-challenge` - Verifies a TOTP code during MFA flow
 - `POST /api/auth/refresh` - Uses the refresh token to get new access/refresh tokens
 - `POST /api/auth/logout` - Invalidates the refresh token server-side, clears all cookies
+- `POST /api/auth/forgot-password` - Request a password reset email
+- `POST /api/auth/reset-password` - Reset password using a token
+- `POST /api/auth/verify-email` - Verify email address with a token
 
 ### Platform Auth (Admin Panels)
 
@@ -74,6 +77,14 @@ export { GET, POST };
 ```
 
 Platform auth routes use the `/api/platform/auth/*` endpoints instead of `/api/v1/auth/*`. They do not require a publishable key since platform users are not scoped to a specific application environment.
+
+Handles:
+- `POST /api/auth/login` - Platform user login
+- `POST /api/auth/register` - Platform user + tenant registration
+- `POST /api/auth/mfa-challenge` - MFA verification
+- `POST /api/auth/refresh` - Token refresh
+- `POST /api/auth/logout` - Logout
+- `GET /api/auth/me` - Get current platform user
 
 ## Middleware Configuration
 

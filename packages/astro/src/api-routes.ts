@@ -202,6 +202,39 @@ export function createAuthRoutes(config: InAIAuthConfig = {}) {
     }
   }
 
+  async function handleForgotPassword(context: AstroAPIContext): Promise<Response> {
+    try {
+      const body = await context.request.json() as Record<string, string>;
+      const result = await client.forgotPassword(body.email);
+      return jsonResponse(result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Request failed";
+      return jsonResponse({ error: message }, 400);
+    }
+  }
+
+  async function handleResetPassword(context: AstroAPIContext): Promise<Response> {
+    try {
+      const body = await context.request.json() as Record<string, string>;
+      const result = await client.resetPassword(body.token, body.password);
+      return jsonResponse(result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Request failed";
+      return jsonResponse({ error: message }, 400);
+    }
+  }
+
+  async function handleVerifyEmail(context: AstroAPIContext): Promise<Response> {
+    try {
+      const body = await context.request.json() as Record<string, string>;
+      const result = await client.verifyEmail(body.token);
+      return jsonResponse(result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Request failed";
+      return jsonResponse({ error: message }, 400);
+    }
+  }
+
   async function handleLogout(context: AstroAPIContext): Promise<Response> {
     try {
       const refreshToken = context.cookies.get(COOKIE_REFRESH_TOKEN)?.value;
@@ -231,6 +264,12 @@ export function createAuthRoutes(config: InAIAuthConfig = {}) {
           return handleRefresh(context);
         case "logout":
           return handleLogout(context);
+        case "forgot-password":
+          return handleForgotPassword(context);
+        case "reset-password":
+          return handleResetPassword(context);
+        case "verify-email":
+          return handleVerifyEmail(context);
       }
     }
 

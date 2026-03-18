@@ -134,6 +134,39 @@ export function createAuthRoutes(config: InAIAuthConfig = {}) {
     }
   }
 
+  async function handleForgotPassword(req: NextRequest) {
+    try {
+      const body = (await req.json()) as Record<string, string>;
+      const result = await client.forgotPassword(body.email);
+      return NextResponse.json(result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Request failed";
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
+  }
+
+  async function handleResetPassword(req: NextRequest) {
+    try {
+      const body = (await req.json()) as Record<string, string>;
+      const result = await client.resetPassword(body.token, body.password);
+      return NextResponse.json(result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Request failed";
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
+  }
+
+  async function handleVerifyEmail(req: NextRequest) {
+    try {
+      const body = (await req.json()) as Record<string, string>;
+      const result = await client.verifyEmail(body.token);
+      return NextResponse.json(result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Request failed";
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
+  }
+
   async function handleLogout() {
     try {
       const cookieStore = await cookies();
@@ -169,6 +202,12 @@ export function createAuthRoutes(config: InAIAuthConfig = {}) {
           return handleRefresh();
         case "logout":
           return handleLogout();
+        case "forgot-password":
+          return handleForgotPassword(req);
+        case "reset-password":
+          return handleResetPassword(req);
+        case "verify-email":
+          return handleVerifyEmail(req);
       }
     }
 

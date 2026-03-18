@@ -10,6 +10,12 @@ export { useOrganization } from "./hooks/use-organization";
 export { useSignIn } from "./hooks/use-sign-in";
 export { useSignUp } from "./hooks/use-sign-up";
 export { useSessionTimeout } from "./hooks/use-session-timeout";
+export { usePlatformAuth } from "./hooks/use-platform-auth";
+export { useApplications } from "./hooks/use-applications";
+export { usePlatformMembers } from "./hooks/use-platform-members";
+export { useForgotPassword } from "./hooks/use-forgot-password";
+export { useResetPassword } from "./hooks/use-reset-password";
+export { useVerifyEmail } from "./hooks/use-verify-email";
 
 // Components
 export { Protect } from "./components/protect";

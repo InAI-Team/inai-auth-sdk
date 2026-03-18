@@ -33,6 +33,8 @@ const client = new InAIAuthClient({
 | `forgotPassword` | `(email: string) => Promise<{ message }>` | Request a password reset email. |
 | `resetPassword` | `(token, password) => Promise<{ message }>` | Reset password using the token from the email link. |
 | `verifyEmail` | `(token: string) => Promise<{ message }>` | Verify an email address using the token from the verification email. |
+| `getOAuthInitUrl` | `(provider, redirectUri) => string` | Build an OAuth initialization URL for the given provider (`"github"`, `"google"`, `"instagram"`). |
+| `revokeAllSessions` | `(accessToken, { password, keepCurrent? }) => Promise<{ revoked }>` | Revoke all user sessions. Requires current password. `keepCurrent: true` preserves the calling session. |
 
 #### Platform Auth Methods
 
@@ -42,9 +44,11 @@ Used by admin panels for developer/operator authentication.
 |--------|-----------|-------------|
 | `platformLogin` | `(params: LoginParams) => Promise<LoginResult & { user? }>` | Platform user login. |
 | `platformRefresh` | `(refreshToken: string) => Promise<TokenPair>` | Refresh platform tokens. |
-| `platformLogout` | `(refreshToken: string) => Promise<void>` | Invalidate platform refresh token. |
+| `platformLogout` | `(accessToken: string) => Promise<void>` | Invalidate platform session. |
 | `platformMfaChallenge` | `(params: MFAChallengeParams) => Promise<TokenPair & { user? }>` | Complete platform MFA. |
 | `platformGetMe` | `(accessToken: string) => Promise<{ data: PlatformUserResource }>` | Fetch platform user profile. |
+| `platformRegister` | `(params: { email, password, firstName?, lastName?, tenantName, tenantSlug }) => Promise<LoginResult & { user?, tenant? }>` | Register a new platform user and tenant. |
+| `initializeEmailTemplates` | `(accessToken: string) => Promise<{ data: { created } }>` | Create default email templates for the tenant. |
 
 #### Platform Management Methods
 
@@ -63,6 +67,232 @@ Used by admin panels to manage applications and users.
 | `createAppApiKey` | `(accessToken, appId, name, environmentId) => Promise<{ data: ApiKeyResource & { key } }>` | Create an API key (full key returned only once). |
 | `revokeAppApiKey` | `(accessToken, appId, keyId) => Promise<void>` | Revoke an API key. |
 | `rotateAppKeys` | `(accessToken, appId, environmentId) => Promise<{ publishableKey }>` | Rotate environment publishable key. |
+
+#### V1 User Management Methods
+
+Used by applications to manage their users via publishable key.
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `listUsers` | `(accessToken, params?) => Promise<PaginatedResult<UserResource>>` | List users with pagination and search. |
+| `createUser` | `(accessToken, { email, password, firstName?, lastName? }) => Promise<{ data: UserResource }>` | Create a new user. |
+| `getUser` | `(accessToken, userId) => Promise<{ data: UserResource }>` | Get a user by ID. |
+| `getUserByExternalId` | `(accessToken, externalId) => Promise<{ data: UserResource }>` | Get a user by their external system ID. |
+| `updateUser` | `(accessToken, userId, data) => Promise<{ data: UserResource }>` | Update user fields (firstName, lastName, isActive). |
+| `assignUserRoles` | `(accessToken, userId, roleIds) => Promise<{ data: { userId, roles } }>` | Assign roles to a user. |
+
+#### V1 Role & Permission Management Methods
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `listRoles` | `(accessToken, params?) => Promise<{ data: RoleResource[] }>` | List all roles. |
+| `createRole` | `(accessToken, { name, description?, hierarchyLevel? }) => Promise<{ data: RoleResource }>` | Create a new role. |
+| `getRole` | `(accessToken, roleId) => Promise<{ data: RoleResource }>` | Get a role by ID. |
+| `updateRole` | `(accessToken, roleId, data) => Promise<{ data: RoleResource }>` | Update a role. |
+| `deleteRole` | `(accessToken, roleId) => Promise<{ success }>` | Delete a role. |
+| `getRolePermissions` | `(accessToken, roleId) => Promise<{ data: PermissionResource[] }>` | Get all permissions assigned to a role. |
+| `assignRolePermissions` | `(accessToken, roleId, permissionIds) => Promise<{ data: { assigned, skipped } }>` | Assign permissions to a role. |
+| `removeRolePermission` | `(accessToken, roleId, permissionId) => Promise<{ success, message }>` | Remove a permission from a role. |
+| `listPermissions` | `(accessToken, params?) => Promise<{ data: PermissionResource[] }>` | List all permissions. |
+| `createPermission` | `(accessToken, { name, description?, resource, action }) => Promise<{ data: PermissionResource }>` | Create a new permission. |
+| `deletePermission` | `(accessToken, permissionId) => Promise<{ success }>` | Delete a permission. |
+
+#### Delete Application
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `deleteApplication` | `(accessToken, appId) => Promise<void>` | Delete an application permanently. |
+
+#### App User Management Methods (Platform)
+
+Used by admin panels to manage individual app users.
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `getAppUser` | `(accessToken, appId, userId) => Promise<{ data: UserResource }>` | Get a specific user in an app. |
+| `updateAppUser` | `(accessToken, appId, userId, { firstName?, lastName?, isActive? }) => Promise<{ data: UserResource }>` | Update an app user's profile or status. |
+| `assignAppUserRoles` | `(accessToken, appId, userId, roleIds) => Promise<{ data: { userId, roles } }>` | Assign roles to a specific app user. |
+
+#### App Role Management Methods (Platform)
+
+Used by admin panels to manage roles within an application.
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `listAppRoles` | `(accessToken, appId, { environmentId? }?) => Promise<{ data: RoleResource[] }>` | List roles for an app. |
+| `createAppRole` | `(accessToken, appId, { name, description?, environmentId?, hierarchyLevel? }) => Promise<{ data: RoleResource }>` | Create a role in an app. |
+| `getAppRole` | `(accessToken, appId, roleId) => Promise<{ data: RoleResource }>` | Get a specific role. |
+| `updateAppRole` | `(accessToken, appId, roleId, { name?, description? }) => Promise<{ data: RoleResource }>` | Update a role. |
+| `deleteAppRole` | `(accessToken, appId, roleId) => Promise<{ success }>` | Delete a role. |
+| `getAppRolePermissions` | `(accessToken, appId, roleId) => Promise<{ data: PermissionResource[] }>` | Get permissions assigned to a role. |
+| `assignAppRolePermissions` | `(accessToken, appId, roleId, permissionIds) => Promise<{ data: { assigned, skipped } }>` | Assign permissions to a role. |
+| `removeAppRolePermission` | `(accessToken, appId, roleId, permissionId) => Promise<{ success, message }>` | Remove a permission from a role. |
+
+#### App Permission Management Methods (Platform)
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `listAppPermissions` | `(accessToken, appId, { environmentId? }?) => Promise<{ data: PermissionResource[] }>` | List permissions for an app. |
+| `createAppPermission` | `(accessToken, appId, { name, description?, resource, action, environmentId? }) => Promise<{ data: PermissionResource }>` | Create a permission. |
+| `deleteAppPermission` | `(accessToken, appId, permissionId) => Promise<{ success }>` | Delete a permission. |
+
+#### Platform Members Methods
+
+Used by admin panels to manage team members and invitations.
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `listPlatformMembers` | `(accessToken) => Promise<{ data: PlatformMemberResource[] }>` | List all platform team members. |
+| `invitePlatformMember` | `(accessToken, { email, roleName, firstName?, lastName? }) => Promise<{ data: PlatformInvitationResource, message }>` | Invite a new team member. |
+| `updatePlatformMember` | `(accessToken, memberId, { roleName }) => Promise<{ data: { id, email, roles } }>` | Update a member's role. |
+| `removePlatformMember` | `(accessToken, memberId) => Promise<{ message }>` | Remove a team member. |
+| `listPlatformInvitations` | `(accessToken) => Promise<{ data: PlatformInvitationResource[] }>` | List pending invitations. |
+| `cancelPlatformInvitation` | `(accessToken, invitationId) => Promise<{ success }>` | Cancel a pending invitation. |
+| `resendPlatformInvitation` | `(accessToken, invitationId) => Promise<{ data: PlatformInvitationResource }>` | Resend an invitation email. |
+| `acceptPlatformInvitation` | `(invitationId, { password, firstName?, lastName? }) => Promise<{ message }>` | Accept an invitation (no auth required). |
+
+#### App Session Management Methods (Platform)
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `listAppSessions` | `(accessToken, appId, { environmentId?, page?, limit? }?) => Promise<PaginatedResult<AppSessionResource>>` | List active sessions for an app. |
+| `revokeAppSession` | `(accessToken, appId, sessionId) => Promise<{ message }>` | Revoke a specific session. |
+
+#### App Audit Log Methods (Platform)
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `listAppAuditLogs` | `(accessToken, appId, { environmentId?, page?, limit?, action? }?) => Promise<PaginatedResult<AuditLogResource>>` | List audit logs for an app. |
+
+#### App Invitation Methods (Platform)
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `listAppInvitations` | `(accessToken, appId, { environmentId? }?) => Promise<{ data: InvitationResource[] }>` | List invitations for an app. |
+| `createAppInvitation` | `(accessToken, appId, { email, roleId?, environmentId }) => Promise<{ data: InvitationResource }>` | Create an invitation. |
+| `resendAppInvitation` | `(accessToken, appId, invitationId) => Promise<{ data: InvitationResource }>` | Resend an invitation email. |
+| `cancelAppInvitation` | `(accessToken, appId, invitationId) => Promise<{ success }>` | Cancel a pending invitation. |
+
+#### App Organization Methods (Platform)
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `listAppOrganizations` | `(accessToken, appId, { environmentId?, page?, limit? }?) => Promise<PaginatedResult<OrganizationResource>>` | List organizations in an app. |
+| `createAppOrganization` | `(accessToken, appId, { name, slug, environmentId, imageUrl?, metadata? }) => Promise<{ data: OrganizationResource }>` | Create an organization. |
+| `updateAppOrganization` | `(accessToken, appId, orgId, { name?, slug?, imageUrl?, metadata? }) => Promise<{ data: OrganizationResource }>` | Update an organization. |
+| `deleteAppOrganization` | `(accessToken, appId, orgId) => Promise<{ success }>` | Delete an organization. |
+
+#### App Webhook Methods (Platform)
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `listAppWebhooks` | `(accessToken, appId) => Promise<{ data: WebhookResource[] }>` | List webhooks for an app. |
+| `createAppWebhook` | `(accessToken, appId, { url, events, environmentId? }) => Promise<{ data: WebhookResource }>` | Create a webhook. |
+| `deleteAppWebhook` | `(accessToken, appId, webhookId) => Promise<{ success }>` | Delete a webhook. |
+
+#### App Email Template Methods (Platform)
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `listAppEmailTemplates` | `(accessToken, appId, { environmentId? }?) => Promise<{ data: EmailTemplateResource[] }>` | List email templates for an app. |
+| `createAppEmailTemplate` | `(accessToken, appId, { name, subject, htmlBody, textBody?, environmentId, variables? }) => Promise<{ data: EmailTemplateResource }>` | Create an email template. |
+| `updateAppEmailTemplate` | `(accessToken, appId, templateId, { name?, subject?, htmlBody?, textBody?, variables?, isActive? }) => Promise<{ data: EmailTemplateResource }>` | Update an email template. |
+| `previewAppEmailTemplate` | `(accessToken, appId, templateId) => Promise<{ html, text }>` | Preview rendered email template. |
+
+#### Platform API Key Methods
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `listPlatformApiKeys` | `(accessToken) => Promise<{ data: ApiKeyResource[] }>` | List platform-level API keys. |
+| `createPlatformApiKey` | `(accessToken, { name }) => Promise<{ data: ApiKeyResource & { key } }>` | Create a platform API key (full key returned only once). |
+| `revokePlatformApiKey` | `(accessToken, keyId) => Promise<void>` | Revoke a platform API key. |
+
+#### Platform Webhook Methods
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `listPlatformWebhooks` | `(accessToken) => Promise<{ data: WebhookResource[] }>` | List platform-level webhooks. |
+| `createPlatformWebhook` | `(accessToken, { url, events }) => Promise<{ data: WebhookResource }>` | Create a platform webhook. |
+| `deletePlatformWebhook` | `(accessToken, webhookId) => Promise<{ success }>` | Delete a platform webhook. |
+
+#### Platform Email Template Methods
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `listPlatformEmailTemplates` | `(accessToken) => Promise<{ data: EmailTemplateResource[] }>` | List platform email templates. |
+| `updatePlatformEmailTemplate` | `(accessToken, templateId, { subject?, htmlBody?, textBody?, isActive? }) => Promise<{ data: EmailTemplateResource }>` | Update a platform email template. |
+| `previewPlatformEmailTemplate` | `(accessToken, templateId) => Promise<{ html, text }>` | Preview rendered platform email template. |
+| `initializeEmailTemplates` | `(accessToken) => Promise<{ data: EmailTemplateResource[], message }>` | Create default email templates for the tenant. |
+
+#### Platform Audit Log Methods
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `listPlatformAuditLogs` | `(accessToken, { page?, limit?, action? }?) => Promise<PaginatedResult<AuditLogResource>>` | List platform-level audit logs. |
+
+#### Platform Settings Methods
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `updatePlatformSettings` | `(accessToken, data) => Promise<{ data: Record<string, unknown> }>` | Update platform-wide settings. |
+
+#### MFA Management Methods (App User)
+
+Used by app users to manage their own MFA settings.
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `enableMfa` | `(accessToken) => Promise<{ data: MfaSetupResponse }>` | Start MFA setup. Returns TOTP secret and QR code URI. |
+| `verifyMfaSetup` | `(accessToken, code) => Promise<{ data: BackupCodesResponse }>` | Verify TOTP code to complete MFA setup. Returns backup codes. |
+| `disableMfa` | `(accessToken, code) => Promise<{ message }>` | Disable MFA (requires current TOTP code). |
+| `generateBackupCodes` | `(accessToken) => Promise<{ data: BackupCodesResponse }>` | Generate new backup codes (invalidates previous ones). |
+| `verifyBackupCode` | `(accessToken, code) => Promise<{ message }>` | Verify a backup code. |
+| `getRemainingBackupCodes` | `(accessToken) => Promise<{ data: { remaining } }>` | Get count of remaining valid backup codes. |
+
+#### User Session Methods (App User)
+
+Used by app users to manage their own sessions.
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `listSessions` | `(accessToken) => Promise<{ data: AppSessionResource[] }>` | List all active sessions for the current user. |
+| `revokeSession` | `(accessToken, sessionId) => Promise<{ message }>` | Revoke a specific session. |
+| `revokeAllSessions` | `(accessToken, { password, keepCurrent? }) => Promise<{ message, revokedCount }>` | Revoke all sessions. Requires current password. |
+
+#### User Organization Methods (App User)
+
+Used by app users to manage their own organizations.
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `listOrganizations` | `(accessToken) => Promise<{ data: OrganizationResource[] }>` | List organizations the user belongs to. |
+| `createOrganization` | `(accessToken, { name, slug, imageUrl?, metadata? }) => Promise<{ data: OrganizationResource }>` | Create a new organization. |
+| `getOrganization` | `(accessToken, orgId) => Promise<{ data: OrganizationResource }>` | Get organization details. |
+| `updateOrganization` | `(accessToken, orgId, { name?, slug?, imageUrl?, metadata? }) => Promise<{ data: OrganizationResource }>` | Update an organization. |
+| `deleteOrganization` | `(accessToken, orgId) => Promise<{ success }>` | Delete an organization. |
+| `listOrgMembers` | `(accessToken, orgId) => Promise<{ data: OrganizationMemberResource[] }>` | List members of an organization. |
+| `addOrgMember` | `(accessToken, orgId, { userId, role? }) => Promise<{ data: OrganizationMemberResource }>` | Add a member to an organization. |
+| `updateOrgMember` | `(accessToken, orgId, memberId, { role }) => Promise<{ data: OrganizationMemberResource }>` | Update a member's role. |
+| `removeOrgMember` | `(accessToken, orgId, memberId) => Promise<{ success }>` | Remove a member from an organization. |
+| `createOrgInvitation` | `(accessToken, orgId, { email, role? }) => Promise<{ data: InvitationResource }>` | Invite a user to an organization. |
+
+#### User Invitation Methods (App User)
+
+Used by app users to manage invitations.
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `listInvitations` | `(accessToken) => Promise<{ data: InvitationResource[] }>` | List pending invitations for the user. |
+| `sendInvitation` | `(accessToken, { email, roleId? }) => Promise<{ data: InvitationResource }>` | Send an invitation. |
+| `acceptInvitation` | `(accessToken, invitationId) => Promise<{ message }>` | Accept an invitation. |
+| `cancelInvitation` | `(accessToken, invitationId) => Promise<{ success }>` | Cancel a sent invitation. |
+| `resendInvitation` | `(accessToken, invitationId) => Promise<{ data: InvitationResource }>` | Resend an invitation email. |
+
+#### User Import Methods
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `importUsers` | `({ users, environmentId, updateExisting? }) => Promise<{ data: ImportUsersResult }>` | Bulk import users. Uses publishable key auth. |
 
 ### InAIAuthError
 
@@ -458,6 +688,167 @@ function useSignUp(): {
 
 Manages the registration flow. If email verification is required, `status` transitions to `"needs_email_verification"`.
 
+#### useForgotPassword()
+
+```ts
+function useForgotPassword(): {
+  forgotPassword: (email: string) => Promise<{ success: boolean; message?: string; error?: string }>;
+  isLoading: boolean;
+  error: string | null;
+  status: "idle" | "loading" | "success" | "error";
+  reset: () => void;
+}
+```
+
+Sends a password reset email. Calls `POST /api/auth/forgot-password`.
+
+```tsx
+const { forgotPassword, isLoading, status, error } = useForgotPassword();
+
+await forgotPassword("user@example.com");
+// status → "success" if the email was sent
+```
+
+#### useResetPassword()
+
+```ts
+function useResetPassword(): {
+  resetPassword: (params: { token: string; password: string }) => Promise<{ success: boolean; message?: string; error?: string }>;
+  isLoading: boolean;
+  error: string | null;
+  status: "idle" | "loading" | "success" | "error";
+  reset: () => void;
+}
+```
+
+Resets the user's password using a token from the reset email. Calls `POST /api/auth/reset-password`.
+
+```tsx
+const { resetPassword, isLoading, status, error } = useResetPassword();
+
+await resetPassword({ token: tokenFromUrl, password: newPassword });
+// status → "success" if the password was reset
+```
+
+#### useVerifyEmail()
+
+```ts
+function useVerifyEmail(): {
+  verifyEmail: (token: string) => Promise<{ success: boolean; message?: string; error?: string }>;
+  isLoading: boolean;
+  error: string | null;
+  status: "idle" | "loading" | "success" | "error";
+  reset: () => void;
+}
+```
+
+Verifies an email address using a token from the verification email. Calls `POST /api/auth/verify-email`.
+
+```tsx
+const { verifyEmail, isLoading, status, error } = useVerifyEmail();
+
+await verifyEmail(tokenFromUrl);
+// status → "success" if the email was verified
+```
+
+#### useSessionTimeout()
+
+```ts
+function useSessionTimeout(options?: {
+  warningBeforeMs?: number;     // default: 30 minutes (SESSION_WARNING_BEFORE_MS)
+  sessionMaxDurationMs?: number; // default: 7 days (SESSION_MAX_DURATION_MS)
+}): {
+  showWarning: boolean;
+  secondsLeft: number;
+  handleLogout: () => Promise<void>;
+}
+```
+
+Monitors the 7-day absolute session lifetime. Shows a warning countdown before session expiry and auto-logs out when the session reaches maximum duration. Checks every 30 seconds.
+
+```tsx
+const { showWarning, secondsLeft, handleLogout } = useSessionTimeout();
+
+if (showWarning) {
+  return <div>Session expires in {secondsLeft}s <button onClick={handleLogout}>Logout now</button></div>;
+}
+```
+
+#### usePlatformAuth()
+
+```ts
+function usePlatformAuth(options?: { basePath?: string }): {
+  user: PlatformUserResource | null;
+  status: "idle" | "loading" | "needs_mfa" | "complete" | "error";
+  error: string | null;
+  isLoading: boolean;
+  mfaToken: string | null;
+  login: (params: { email: string; password: string }) => Promise<void>;
+  verifyMfa: (code: string) => Promise<void>;
+  logout: () => Promise<void>;
+  refresh: () => Promise<void>;
+  getMe: () => Promise<PlatformUserResource | null>;
+}
+```
+
+State machine for platform (admin panel) authentication. Handles the full login flow including MFA. Default `basePath` is `"/api/platform-auth"`.
+
+```tsx
+const { login, verifyMfa, status, user, error } = usePlatformAuth();
+
+await login({ email, password });
+// If status === "needs_mfa", call verifyMfa(code)
+```
+
+#### useApplications()
+
+```ts
+function useApplications(options?: { basePath?: string }): {
+  applications: ApplicationResource[];
+  isLoading: boolean;
+  error: string | null;
+  fetchApplications: () => Promise<ApplicationResource[]>;
+  createApplication: (data: { name: string; slug: string; domain?: string; homeUrl?: string }) => Promise<ApplicationResource | null>;
+  updateApplication: (appId: string, data: Partial<{ name: string; domain: string | null; homeUrl: string | null; isActive: boolean }>) => Promise<ApplicationResource | null>;
+  deleteApplication: (appId: string) => Promise<boolean>;
+}
+```
+
+CRUD hook for managing applications in admin panels. Default `basePath` is `"/api/platform"`.
+
+```tsx
+const { applications, fetchApplications, createApplication } = useApplications();
+
+useEffect(() => { fetchApplications(); }, []);
+await createApplication({ name: "My App", slug: "my-app" });
+```
+
+#### usePlatformMembers()
+
+```ts
+function usePlatformMembers(options?: { basePath?: string }): {
+  members: PlatformMemberResource[];
+  invitations: PlatformInvitationResource[];
+  isLoading: boolean;
+  error: string | null;
+  fetchMembers: () => Promise<PlatformMemberResource[]>;
+  inviteMember: (data: { email: string; roleName: string; firstName?: string; lastName?: string }) => Promise<PlatformInvitationResource | null>;
+  updateMember: (memberId: string, data: { roleName: string }) => Promise<boolean>;
+  removeMember: (memberId: string) => Promise<boolean>;
+  fetchInvitations: () => Promise<PlatformInvitationResource[]>;
+  cancelInvitation: (invitationId: string) => Promise<boolean>;
+}
+```
+
+Manages platform team members and invitations. Default `basePath` is `"/api/platform"`.
+
+```tsx
+const { members, fetchMembers, inviteMember } = usePlatformMembers();
+
+useEffect(() => { fetchMembers(); }, []);
+await inviteMember({ email: "dev@example.com", roleName: "admin" });
+```
+
 ### Components
 
 #### InAIAuthProvider
@@ -606,6 +997,16 @@ function createPlatformAuthRoutes(config: InAIAuthConfig): {
 ```
 
 Same as `createAuthRoutes` but for platform user authentication. Uses `/api/platform/auth/*` API endpoints.
+
+Handles the following endpoints:
+- `POST /api/auth/login` — Platform user login
+- `POST /api/auth/register` — Platform user + tenant registration
+- `POST /api/auth/mfa-challenge` — MFA verification
+- `POST /api/auth/refresh` — Token refresh
+- `POST /api/auth/logout` — Logout
+- `GET /api/auth/me` — Get current platform user
+
+> **Session lifetime:** Sessions have a maximum absolute duration of 7 days from the initial login. This is enforced via the `inai_session_start` cookie, which is only set during login (not on refresh). The refresh token can only extend the access token within this 7-day window — it is not a sliding window.
 
 ### configureAuth()
 

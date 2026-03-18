@@ -21,6 +21,11 @@
       "types": "./dist/api-routes.d.ts",
       "import": "./dist/api-routes.js",
       "require": "./dist/api-routes.cjs"
+    },
+    "./platform-api-routes": {
+      "types": "./dist/platform-api-routes.d.ts",
+      "import": "./dist/platform-api-routes.js",
+      "require": "./dist/platform-api-routes.cjs"
     }
   },
   "sideEffects": false,

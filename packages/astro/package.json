@@ -21,6 +21,10 @@
     "./api-routes": {
       "types": "./dist/api-routes.d.ts",
       "import": "./dist/api-routes.js"
+    },
+    "./platform-api-routes": {
+      "types": "./dist/platform-api-routes.d.ts",
+      "import": "./dist/platform-api-routes.js"
     }
   },
   "sideEffects": false,

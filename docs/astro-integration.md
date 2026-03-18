@@ -88,6 +88,9 @@ Handles the following endpoints automatically:
 - `POST /api/auth/mfa-challenge` — MFA verification
 - `POST /api/auth/refresh` — Token refresh (also called automatically by middleware)
 - `POST /api/auth/logout` — User logout
+- `POST /api/auth/forgot-password` — Request password reset email
+- `POST /api/auth/reset-password` — Reset password with token
+- `POST /api/auth/verify-email` — Verify email address
 
 ## Server-Side Auth Helpers
 

@@ -1,13 +1,11 @@
 import type { MiddlewareHandler } from "astro";
-import type { AuthObject } from "@inai-dev/types";
+import { buildAuthObjectFromToken } from "@inai-dev/backend";
 import {
   COOKIE_AUTH_TOKEN,
   COOKIE_AUTH_SESSION,
   COOKIE_REFRESH_TOKEN,
   COOKIE_SESSION_START,
   SESSION_MAX_DURATION_MS,
-  decodeJWTHeader,
-  verifyES256,
   isTokenExpired,
   JWKSClient,
   DEFAULT_API_URL,
@@ -94,55 +92,10 @@ export function inaiAstroMiddleware(
       );
     }
 
-    // Verify token signature with JWKS
-    const header = decodeJWTHeader(token);
-    if (!header?.kid) {
+    const authObject = await buildAuthObjectFromToken(token, jwksClient);
+    if (!authObject) {
       return context.redirect(`${signInUrl}?returnTo=${encodeURIComponent(pathname)}`);
     }
-
-    let publicKey: CryptoKey;
-    try {
-      publicKey = await jwksClient.getKey(header.kid);
-    } catch {
-      return context.redirect(`${signInUrl}?returnTo=${encodeURIComponent(pathname)}`);
-    }
-
-    let claims = await verifyES256(token, publicKey);
-    if (!claims) {
-      // Signature failed with cached key — refetch once in case of key rotation
-      jwksClient.invalidate();
-      try {
-        publicKey = await jwksClient.getKey(header.kid);
-      } catch {
-        return context.redirect(`${signInUrl}?returnTo=${encodeURIComponent(pathname)}`);
-      }
-      claims = await verifyES256(token, publicKey);
-      if (!claims) {
-        return context.redirect(`${signInUrl}?returnTo=${encodeURIComponent(pathname)}`);
-      }
-    }
-
-    const roles = claims.roles ?? [];
-    const permissions = claims.permissions ?? [];
-
-    const authObject: AuthObject = {
-      userId: claims.sub,
-      tenantId: claims.tenant_id,
-      appId: claims.app_id ?? null,
-      envId: claims.env_id ?? null,
-      orgId: claims.org_id ?? null,
-      orgRole: claims.org_role ?? null,
-      sessionId: null,
-      roles,
-      permissions,
-      getToken: async () => token,
-      has: (params: { role?: string; permission?: string }) => {
-        if (params.role && roles.includes(params.role)) return true;
-        if (params.permission && permissions.includes(params.permission))
-          return true;
-        return false;
-      },
-    };
 
     (context.locals as Record<string, unknown>).auth = authObject;
 

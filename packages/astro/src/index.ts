@@ -6,6 +6,7 @@ export type { InAIAstroMiddlewareConfig } from "./middleware";
 
 export { auth, currentUser, setAuthCookies, clearAuthCookies } from "./server";
 export { createAuthRoutes } from "./api-routes";
+export { createPlatformAuthRoutes } from "./platform-api-routes";
 export type { AstroCookies, AstroAPIContext } from "./api-routes";
 
 export type {

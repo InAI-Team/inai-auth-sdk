@@ -6,6 +6,7 @@ export default defineConfig({
     middleware: "src/middleware.ts",
     server: "src/server.ts",
     "api-routes": "src/api-routes.ts",
+    "platform-api-routes": "src/platform-api-routes.ts",
   },
   format: ["esm"],
   dts: true,

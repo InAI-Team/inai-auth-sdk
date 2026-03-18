@@ -109,6 +109,39 @@ export function createAuthRoutes(config: InAIAuthConfig = {}): Router {
     }
   });
 
+  router.post("/forgot-password", async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body as Record<string, string>;
+      const result = await client.forgotPassword(email);
+      res.json(result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Request failed";
+      res.status(400).json({ error: message });
+    }
+  });
+
+  router.post("/reset-password", async (req: Request, res: Response) => {
+    try {
+      const { token, password } = req.body as Record<string, string>;
+      const result = await client.resetPassword(token, password);
+      res.json(result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Request failed";
+      res.status(400).json({ error: message });
+    }
+  });
+
+  router.post("/verify-email", async (req: Request, res: Response) => {
+    try {
+      const { token } = req.body as Record<string, string>;
+      const result = await client.verifyEmail(token);
+      res.json(result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Request failed";
+      res.status(400).json({ error: message });
+    }
+  });
+
   router.post("/logout", async (req: Request, res: Response) => {
     try {
       const refreshToken = getRefreshTokenFromRequest(req);

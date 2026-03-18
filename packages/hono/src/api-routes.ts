@@ -107,6 +107,39 @@ export function createAuthRoutes(config: InAIAuthConfig = {}) {
     }
   });
 
+  app.post("/forgot-password", async (c) => {
+    try {
+      const body = await c.req.json<Record<string, string>>();
+      const result = await client.forgotPassword(body.email);
+      return c.json(result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Request failed";
+      return c.json({ error: message }, 400);
+    }
+  });
+
+  app.post("/reset-password", async (c) => {
+    try {
+      const body = await c.req.json<Record<string, string>>();
+      const result = await client.resetPassword(body.token, body.password);
+      return c.json(result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Request failed";
+      return c.json({ error: message }, 400);
+    }
+  });
+
+  app.post("/verify-email", async (c) => {
+    try {
+      const body = await c.req.json<Record<string, string>>();
+      const result = await client.verifyEmail(body.token);
+      return c.json(result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Request failed";
+      return c.json({ error: message }, 400);
+    }
+  });
+
   app.post("/logout", async (c) => {
     try {
       const refreshToken = getRefreshTokenFromContext(c);
