@@ -1,5 +1,11 @@
 # @inai-dev/types
 
+## 1.9.0
+
+### Minor Changes
+
+- New Endpoints
+
 ## 1.8.0
 
 ### Minor Changes

@@ -1,5 +1,17 @@
 # @inai-dev/react
 
+## 0.10.0
+
+### Minor Changes
+
+- New Endpoints
+
+### Patch Changes
+
+- Updated dependencies
+  - @inai-dev/shared@1.9.0
+  - @inai-dev/types@1.9.0
+
 ## 0.9.0
 
 ### Minor Changes

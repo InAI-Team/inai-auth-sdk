@@ -1,6 +1,6 @@
 {
   "name": "@inai-dev/express",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "Express integration for InAI Auth SDK",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -40,9 +40,9 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@inai-dev/types": "^1.8.0",
-    "@inai-dev/shared": "^1.8.0",
-    "@inai-dev/backend": "^1.9.0"
+    "@inai-dev/types": "^1.9.0",
+    "@inai-dev/shared": "^1.9.0",
+    "@inai-dev/backend": "^1.10.0"
   },
   "peerDependencies": {
     "express": ">=4.17.0"

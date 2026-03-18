@@ -1,5 +1,16 @@
 # @inai-dev/shared
 
+## 1.9.0
+
+### Minor Changes
+
+- New Endpoints
+
+### Patch Changes
+
+- Updated dependencies
+  - @inai-dev/types@1.9.0
+
 ## 1.8.0
 
 ### Minor Changes
