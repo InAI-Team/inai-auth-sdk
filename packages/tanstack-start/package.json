@@ -1,0 +1,76 @@
+{
+  "name": "@inai-dev/tanstack-start",
+  "version": "0.2.0",
+  "description": "TanStack Start integration for InAI Auth SDK",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js",
+      "require": "./dist/server.cjs"
+    },
+    "./middleware": {
+      "types": "./dist/middleware.d.ts",
+      "import": "./dist/middleware.js",
+      "require": "./dist/middleware.cjs"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@inai-dev/types": "^1.10.0",
+    "@inai-dev/shared": "^1.9.0",
+    "@inai-dev/backend": "^1.10.0",
+    "@inai-dev/react": "^0.10.0"
+  },
+  "peerDependencies": {
+    "@tanstack/react-start": ">=1.0.0",
+    "@tanstack/react-router": ">=1.0.0",
+    "react": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@tanstack/react-start": "^1.0.0",
+    "@tanstack/react-router": "^1.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "InAI <contact@inai.dev>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/InAI-Team/inai-auth-sdk.git",
+    "directory": "packages/tanstack-start"
+  },
+  "homepage": "https://inai.dev/",
+  "bugs": "https://github.com/InAI-Team/inai-auth-sdk/issues",
+  "keywords": [
+    "inai",
+    "auth",
+    "tanstack",
+    "tanstack-start",
+    "middleware",
+    "multi-tenant",
+    "react"
+  ]
+}

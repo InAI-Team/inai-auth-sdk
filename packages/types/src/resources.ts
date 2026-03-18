@@ -10,6 +10,7 @@ export interface UserResource {
   mfaEnabled: boolean;
   externalId?: string | null;
   roles?: string[];
+  permissions?: string[];
   createdAt: string;
   updatedAt: string;
   lastLoginAt: string | null;

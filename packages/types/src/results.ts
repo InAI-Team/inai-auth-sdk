@@ -25,6 +25,8 @@ export interface TokenPair {
   refresh_token: string;
   token_type: string;
   expires_in: number;
+  roles?: string[];
+  permissions?: string[];
 }
 
 export interface SignInResult {

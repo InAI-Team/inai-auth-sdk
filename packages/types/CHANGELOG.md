@@ -1,5 +1,11 @@
 # @inai-dev/types
 
+## 1.10.0
+
+### Minor Changes
+
+- tanstack
+
 ## 1.9.0
 
 ### Minor Changes
