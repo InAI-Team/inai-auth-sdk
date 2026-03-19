@@ -21,13 +21,17 @@ import {
  * @example
  * ```ts
  * // routes/api/auth/$path.ts
- * import { createAPIFileRoute } from "@tanstack/react-start/api"
+ * import { createFileRoute } from "@tanstack/react-router"
  * import { createAuthRouteHandlers } from "@inai-dev/tanstack-start/server"
  *
  * const { handleRequest } = createAuthRouteHandlers()
  *
- * export const APIRoute = createAPIFileRoute("/api/auth/$path")({
- *   POST: ({ request, params }) => handleRequest(request, params.path),
+ * export const Route = createFileRoute("/api/auth/$path")({
+ *   server: {
+ *     handlers: {
+ *       POST: ({ request, params }) => handleRequest(request, params.path),
+ *     },
+ *   },
  * })
  * ```
  */

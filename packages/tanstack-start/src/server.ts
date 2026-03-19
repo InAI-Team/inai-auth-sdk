@@ -56,7 +56,7 @@ export function auth(): ServerAuthObject {
     const url = returnTo
       ? `${config.signInUrl}?returnTo=${encodeURIComponent(returnTo)}`
       : config.signInUrl;
-    throw redirect({ to: url });
+    throw redirect({ href: url });
   }
 
   if (!token || isTokenExpired(token)) {
@@ -144,7 +144,7 @@ export function auth(): ServerAuthObject {
     }) => {
       if (params?.role || params?.permission) {
         if (!has({ role: params.role, permission: params.permission })) {
-          throw redirect({ to: params.redirectTo ?? "/unauthorized" });
+          throw redirect({ href: params.redirectTo ?? "/unauthorized" });
         }
       }
       return protectedObj;

@@ -27,7 +27,8 @@ export interface InAITanStackMiddlewareConfig {
   jwksUrl?: string;
   /**
    * Optional callback invoked **before** the auth check runs.
-   * If it returns a `Response`, that response is used and auth is skipped.
+   * If it returns a `Response`, that response is thrown as the final response
+   * (TanStack Start treats thrown `Response` objects as the request result).
    * Useful for custom rate limiting, IP filtering, or early redirects.
    */
   beforeAuth?: (request: Request) => Response | void;

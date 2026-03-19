@@ -59,13 +59,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 ```ts
 // routes/api/auth/$path.ts
-import { createAPIFileRoute } from "@tanstack/react-start/api";
+import { createFileRoute } from "@tanstack/react-router";
 import { createAuthRouteHandlers } from "@inai-dev/tanstack-start/server";
 
 const { handleRequest } = createAuthRouteHandlers();
 
-export const APIRoute = createAPIFileRoute("/api/auth/$path")({
-  POST: ({ request, params }) => handleRequest(request, params.path),
+export const Route = createFileRoute("/api/auth/$path")({
+  server: {
+    handlers: {
+      POST: ({ request, params }) => handleRequest(request, params.path),
+    },
+  },
 });
 ```
 
@@ -149,6 +153,8 @@ const freshUser = await currentUser({ fresh: true });
 
 For fine-grained auth in individual server functions, use the function middleware instead of (or alongside) the request middleware.
 
+> **Note:** `createInAIAuthMiddleware` (request middleware) must only be used as `requestMiddleware` in `createStart()`. In server functions, the `request` object is `undefined` for request-type middleware. Use `createInAIAuthFnMiddleware` (function middleware) for individual server functions — it reads cookies via `getCookie()` instead of `request`.
+
 ### `createInAIAuthFnMiddleware()`
 
 Injects `auth: AuthObject | null` into the server function context. **Never redirects** — lets the handler decide the response.
@@ -162,7 +168,7 @@ const authFn = createInAIAuthFnMiddleware();
 const getProfile = createServerFn({ method: "GET" })
   .middleware([authFn])
   .handler(({ context }) => {
-    if (!context.auth) throw new Error("Not authenticated");
+    if (!context.auth) throw Response.json({ error: "Unauthorized" }, { status: 401 });
     return fetchProfile(context.auth.userId);
   });
 ```
@@ -395,9 +401,13 @@ import { createPlatformAuthRouteHandlers } from "@inai-dev/tanstack-start/server
 
 const { handleRequest } = createPlatformAuthRouteHandlers();
 
-export const APIRoute = createAPIFileRoute("/api/platform/auth/$path")({
-  GET: ({ request, params }) => handleRequest(request, params.path),
-  POST: ({ request, params }) => handleRequest(request, params.path),
+export const Route = createFileRoute("/api/platform/auth/$path")({
+  server: {
+    handlers: {
+      GET: ({ request, params }) => handleRequest(request, params.path),
+      POST: ({ request, params }) => handleRequest(request, params.path),
+    },
+  },
 });
 ```
 
@@ -486,11 +496,11 @@ import type {
 |---------|---------|----------------|
 | Read cookie | `(await cookies()).get(name)?.value` | `getCookie(name)` |
 | Write cookie | `(await cookies()).set(name, val, opts)` | `setCookie(name, val, opts)` |
-| Redirect | `redirect(url)` from `next/navigation` | `throw redirect({ to, search })` from `@tanstack/react-router` |
+| Redirect | `redirect(url)` from `next/navigation` | `throw redirect({ href })` from `@tanstack/react-router` |
 | `auth()` | `async` (returns `Promise`) | **sync** (returns directly) |
 | Middleware | `export function middleware(req)` returns `NextResponse` | `createMiddleware().server(({ next }) => next({ context }))` |
 | Auth context | `x-inai-auth` header | `next({ context: { auth } })` — type-safe |
-| API routes | `export { GET, POST }` catch-all | `createAPIFileRoute()({ POST: handler })` |
+| API routes | `export { GET, POST }` catch-all | `createFileRoute()({ server: { handlers: { POST } } })` |
 | Response | `NextResponse.json()` | `Response.json()` (Web API standard) |
 | Route handlers | `createAuthRoutes()` returns `{ GET, POST }` | `createAuthRouteHandlers()` returns `{ handleRequest }` |
 

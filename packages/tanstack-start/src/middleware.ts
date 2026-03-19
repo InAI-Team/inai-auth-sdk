@@ -1,6 +1,6 @@
 import { createMiddleware } from "@tanstack/react-start";
 import { redirect } from "@tanstack/react-router";
-import { getCookie, setCookie } from "@tanstack/react-start/server";
+import { getCookie, setCookie, getRequest } from "@tanstack/react-start/server";
 import type { AuthObject } from "@inai-dev/types";
 import { buildAuthObjectFromToken, InAIAuthClient } from "@inai-dev/backend";
 import {
@@ -208,6 +208,11 @@ async function refreshTokens(
  * Verifies the JWT access token via JWKS, attempts silent refresh when expired,
  * and injects `{ auth: AuthObject | null }` into the middleware context.
  *
+ * **Important:** This middleware creates a "request" type middleware (the default).
+ * It must be used as a `requestMiddleware` in `createStart()`, **not** as middleware
+ * for individual server functions. In server functions, `request` is `undefined`.
+ * For server function auth, use {@link createInAIAuthFnMiddleware} instead.
+ *
  * @param config - Middleware configuration options.
  * @param config.authMode - `"app"` (default) or `"platform"` auth mode.
  * @param config.publicRoutes - Routes that skip auth. Array of glob strings or a predicate function.
@@ -247,7 +252,8 @@ export function createInAIAuthMiddleware(
   const jwksClient = getJwksClient(config);
 
   return createMiddleware().server(
-    async ({ next, request }) => {
+    async ({ next, request: _request }) => {
+      const request = _request ?? getRequest();
       // beforeAuth hook — run before any auth logic
       if (beforeAuth) {
         const result = beforeAuth(request);
@@ -275,8 +281,10 @@ export function createInAIAuthMiddleware(
             clearAllCookies();
             if (onUnauthorized === "redirect") {
               throw redirect({
-                to: signInUrl,
-                search: { returnTo: pathname },
+                href:
+                  signInUrl +
+                  "?returnTo=" +
+                  encodeURIComponent(pathname),
               });
             }
             return next({ context: { auth: null as AuthObject | null } });
@@ -306,8 +314,10 @@ export function createInAIAuthMiddleware(
         clearAllCookies();
         if (onUnauthorized === "redirect") {
           throw redirect({
-            to: signInUrl,
-            search: { returnTo: pathname },
+            href:
+              signInUrl +
+              "?returnTo=" +
+              encodeURIComponent(pathname),
           });
         }
         return next({ context: { auth: null as AuthObject | null } });
@@ -318,7 +328,7 @@ export function createInAIAuthMiddleware(
       if (!authObj) {
         clearAllCookies();
         if (onUnauthorized === "redirect") {
-          throw redirect({ to: signInUrl });
+          throw redirect({ href: signInUrl });
         }
         return next({ context: { auth: null as AuthObject | null } });
       }
@@ -380,13 +390,13 @@ export function createInAIAuthFnMiddleware(
 /**
  * Guard middleware that requires authentication.
  *
- * Throws a JSON error response (401/403) if the user is not authenticated
- * or lacks the required role/permission. Use after `createInAIAuthFnMiddleware`
- * in the middleware chain.
+ * Throws a `Response.json()` with status 401 (unauthenticated) or 403 (insufficient
+ * role/permission) if the user is not authenticated or lacks the required access.
+ * Use after `createInAIAuthFnMiddleware` in the middleware chain.
  *
  * @param config - Optional role/permission requirements.
- * @param config.role - Required role name.
- * @param config.permission - Required permission name.
+ * @param config.role - Required role name (throws 403 if missing).
+ * @param config.permission - Required permission name (throws 403 if missing).
  *
  * @example
  * ```ts
@@ -412,15 +422,21 @@ export function requireAuth(config?: RequireAuthConfig) {
       const auth = (context as unknown as { auth?: AuthObject | null }).auth;
 
       if (!auth) {
-        throw new Error("Unauthorized");
+        throw Response.json({ error: "Unauthorized" }, { status: 401 });
       }
 
       if (config?.role && !auth.has({ role: config.role })) {
-        throw new Error("Forbidden: insufficient role");
+        throw Response.json(
+          { error: "Forbidden: insufficient role" },
+          { status: 403 },
+        );
       }
 
       if (config?.permission && !auth.has({ permission: config.permission })) {
-        throw new Error("Forbidden: insufficient permission");
+        throw Response.json(
+          { error: "Forbidden: insufficient permission" },
+          { status: 403 },
+        );
       }
 
       return next({ context: { auth } });

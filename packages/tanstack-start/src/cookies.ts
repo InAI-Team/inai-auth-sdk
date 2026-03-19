@@ -128,6 +128,7 @@ export function isSessionExpired(): boolean {
  * @returns The access token string, or `null` if not present.
  */
 export function getAuthTokenFromCookies(): string | null {
+  // getCookie() returns string | undefined; coerce to null for SDK consistency
   return getCookie(COOKIE_AUTH_TOKEN) ?? null;
 }
 
@@ -136,6 +137,7 @@ export function getAuthTokenFromCookies(): string | null {
  * @returns The refresh token string, or `null` if not present.
  */
 export function getRefreshTokenFromCookies(): string | null {
+  // getCookie() returns string | undefined; coerce to null for SDK consistency
   return getCookie(COOKIE_REFRESH_TOKEN) ?? null;
 }
 

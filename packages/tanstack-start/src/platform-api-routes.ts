@@ -25,14 +25,18 @@ import { isSessionExpired } from "./cookies";
  * @example
  * ```ts
  * // routes/api/platform/auth/$path.ts
- * import { createAPIFileRoute } from "@tanstack/react-start/api"
+ * import { createFileRoute } from "@tanstack/react-router"
  * import { createPlatformAuthRouteHandlers } from "@inai-dev/tanstack-start/server"
  *
  * const { handleRequest } = createPlatformAuthRouteHandlers()
  *
- * export const APIRoute = createAPIFileRoute("/api/platform/auth/$path")({
- *   GET: ({ request, params }) => handleRequest(request, params.path),
- *   POST: ({ request, params }) => handleRequest(request, params.path),
+ * export const Route = createFileRoute("/api/platform/auth/$path")({
+ *   server: {
+ *     handlers: {
+ *       GET: ({ request, params }) => handleRequest(request, params.path),
+ *       POST: ({ request, params }) => handleRequest(request, params.path),
+ *     },
+ *   },
  * })
  * ```
  */
