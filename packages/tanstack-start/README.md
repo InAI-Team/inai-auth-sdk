@@ -153,7 +153,10 @@ const freshUser = await currentUser({ fresh: true });
 
 For fine-grained auth in individual server functions, use the function middleware instead of (or alongside) the request middleware.
 
-> **Note:** `createInAIAuthMiddleware` (request middleware) must only be used as `requestMiddleware` in `createStart()`. In server functions, the `request` object is `undefined` for request-type middleware. Use `createInAIAuthFnMiddleware` (function middleware) for individual server functions — it reads cookies via `getCookie()` instead of `request`.
+> **Request vs Function middleware:**
+> - **Request middleware** (`createInAIAuthMiddleware`): Runs on every server request. Has access to the `Request` object. Can redirect unauthenticated users. Use in `createStart({ requestMiddleware: [...] })`.
+> - **Function middleware** (`createInAIAuthFnMiddleware`): Runs only on individual server function calls. Does NOT have access to `Request`. Never redirects — sets `auth: null` and lets the handler decide. Use in `createServerFn().middleware([...])`.
+> - **Guard middleware** (`requireAuth`): Composable guard. Throws `Response.json()` with 401/403 if auth check fails. Chain after `createInAIAuthFnMiddleware`.
 
 ### `createInAIAuthFnMiddleware()`
 
@@ -502,6 +505,7 @@ import type {
 | Auth context | `x-inai-auth` header | `next({ context: { auth } })` — type-safe |
 | API routes | `export { GET, POST }` catch-all | `createFileRoute()({ server: { handlers: { POST } } })` |
 | Response | `NextResponse.json()` | `Response.json()` (Web API standard) |
+| Error response | `NextResponse.json({ error }, { status: 401 })` | `throw Response.json({ error }, { status: 401 })` |
 | Route handlers | `createAuthRoutes()` returns `{ GET, POST }` | `createAuthRouteHandlers()` returns `{ handleRequest }` |
 
 ## Questions & Support

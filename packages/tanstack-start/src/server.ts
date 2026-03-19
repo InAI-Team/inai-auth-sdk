@@ -166,7 +166,7 @@ export function auth(): ServerAuthObject {
  *
  * const getUser = createServerFn({ method: "GET" }).handler(async () => {
  *   const user = await currentUser({ fresh: true })
- *   if (!user) throw new Error("Not authenticated")
+ *   if (!user) throw Response.json({ error: "Unauthorized" }, { status: 401 })
  *   return user
  * })
  * ```

@@ -1,6 +1,6 @@
 import { createMiddleware } from "@tanstack/react-start";
 import { redirect } from "@tanstack/react-router";
-import { getCookie, setCookie, getRequest } from "@tanstack/react-start/server";
+import { getCookie, setCookie } from "@tanstack/react-start/server";
 import type { AuthObject } from "@inai-dev/types";
 import { buildAuthObjectFromToken, InAIAuthClient } from "@inai-dev/backend";
 import {
@@ -252,8 +252,7 @@ export function createInAIAuthMiddleware(
   const jwksClient = getJwksClient(config);
 
   return createMiddleware().server(
-    async ({ next, request: _request }) => {
-      const request = _request ?? getRequest();
+    async ({ next, request }) => {
       // beforeAuth hook — run before any auth logic
       if (beforeAuth) {
         const result = beforeAuth(request);
@@ -363,7 +362,7 @@ export function createInAIAuthMiddleware(
  * const getProfile = createServerFn({ method: "GET" })
  *   .middleware([authFnMiddleware])
  *   .handler(({ context }) => {
- *     if (!context.auth) throw new Error("Not authenticated")
+ *     if (!context.auth) throw Response.json({ error: "Unauthorized" }, { status: 401 })
  *     return fetchProfile(context.auth.userId)
  *   })
  * ```
