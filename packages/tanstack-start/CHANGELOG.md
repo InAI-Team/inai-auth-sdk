@@ -1,5 +1,11 @@
 # @inai-dev/tanstack-start
 
+## 2.0.0
+
+### Major Changes
+
+- Server
+
 ## 1.0.0
 
 ### Major Changes
